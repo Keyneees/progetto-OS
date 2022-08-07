@@ -1,0 +1,65 @@
+#include "fun.h"
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <string.h>
+
+int fdfat;
+char* buf;
+
+int main(){
+	int ret=mkdir(FILE_SYSTEM_DIRECTORY, 0666);
+	if(ret==-1 && errno!=EEXIST){
+		handle_error("Errore: impossibile creare la directory file system\n");
+	}
+
+	fdfat=open(FAT_FILE_NAME, O_CREAT | O_RDRW, 0600);
+	if(fdfat==-1){
+		handle_error("Errore: impossibile aprire il file contenente la FAT\n");
+	}
+	
+	next_inode=rowCounter(fdfat);
+	if(next_inode==0){
+		createFile(fdfat, next_inode, FILE_TYPE, FAT_FILE_NAME, GENERIC_CREATOR);
+		createDirectory(fdfat, next_inode, DIR_TYPE, FILE_SYSTEM_DIRECTORY, GENERIC_CREATOR);
+	}
+	
+	printf("Server pronto all'avvio\n");
+	
+	while(1){
+		printf("In attesa dei comandi degli utenti...\n");
+		ret=mkfifo(FIFO_FOR_FAT, 0600);
+		if(ret==-1) handle_error("Errore: impossibile creare la fifo per ricevere istruzioni dagli utenti\n");
+		
+		int fdfifo=open(FIFO_FOR_FAT, O_RDONLY);
+		if(fdfifo==-1) handle_error("Errore: impossibile aprire la fifo per comunicare con gli utenti\n");
+		
+		int bytes_read=0;
+		while(1){
+			bytes_read=read(fdfifo, buf+bytes_read, 1);
+			if(bytes_read==-1){
+				if(errno==EINTR){
+					continue;
+				}else{
+					handle_error("Errore: impossibile leggere il messaggio dell'utente\n");
+				}
+			}else if(bytes_read==0){
+				break;
+			}else{
+				bytes_read++;
+			}
+		}
+		
+		ret=close(fdfifo)
+		if(ret==-1) handle_error("Errore: impossibile chiudere il descrittore della fifo\n");
+		ret=unlink(FIFO_FOR_FAT);
+		if(ret==-1) handle_error("Errore: impossibile eliminare la fifo\n");
+		
+		char* elem=strtok(buf, SEPARATOR);
+		if(strcmp(elem, DELETE_CMD)==0){
+			//GESTIONE ELIMINAZIONE DELLA RIGA
+		}else{
+			//GESTIONE INSERIMENTO DELLA RIGA
+		} 
+	}
+}
