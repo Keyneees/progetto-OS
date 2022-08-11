@@ -1,2 +1,2 @@
-gcc -o main.c fun.c fun.h var.h main
-gcc -o server.c var.h server
+gcc -o main main.c fun.c fun.h var.h 
+gcc -o server server.c var.h 

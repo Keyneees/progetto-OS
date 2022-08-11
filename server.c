@@ -1,28 +1,33 @@
 #include "fun.h"
+#include "var.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 int fdfat;
 char* buf;
 
 int main(){
-	int ret=mkdir(FILE_SYSTEM_DIRECTORY, 0666);
+	/*int ret=mkdir(FILE_SYSTEM_DIRECTORY, 0666);
 	if(ret==-1 && errno!=EEXIST){
 		handle_error("Errore: impossibile creare la directory file system\n");
 	}
 
-	fdfat=open(FAT_FILE_NAME, O_CREAT | O_RDRW, 0600);
+	fdfat=open(FAT_FILE_NAME, O_CREAT | O_RDWR, 0600);
 	if(fdfat==-1){
 		handle_error("Errore: impossibile aprire il file contenente la FAT\n");
 	}
 	
-	next_inode=rowCounter(fdfat);
+	next_inode=rowCounter(fdfat);*/
 	if(next_inode==0){
-		createFile(fdfat, next_inode, FILE_TYPE, FAT_FILE_NAME, GENERIC_CREATOR);
-		createDirectory(fdfat, next_inode, DIR_TYPE, FILE_SYSTEM_DIRECTORY, GENERIC_CREATOR);
+		createFile(fdfat, next_inode, FAT_FILE_NAME, FILE_TYPE, GENERIC_CREATOR);
+		createDirectory(fdfat, next_inode, FILE_SYSTEM_DIRECTORY, DIR_TYPE, GENERIC_CREATOR);
 	}
+	int ret;
 	
 	printf("Server pronto all'avvio\n");
 	
@@ -50,12 +55,13 @@ int main(){
 			}
 		}
 		
-		ret=close(fdfifo)
+		ret=close(fdfifo);
 		if(ret==-1) handle_error("Errore: impossibile chiudere il descrittore della fifo\n");
 		ret=unlink(FIFO_FOR_FAT);
 		if(ret==-1) handle_error("Errore: impossibile eliminare la fifo\n");
 		
 		char* elem=strtok(buf, SEPARATOR);
+		printf("%s\n", elem);
 		if(strcmp(elem, DELETE_CMD)==0){
 			//GESTIONE ELIMINAZIONE DELLA RIGA
 		}else{
