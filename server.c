@@ -7,25 +7,28 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdio.h>
 
 int fdfat;
 char* buf;
 
 int main(){
-	/*int ret=mkdir(FILE_SYSTEM_DIRECTORY, 0666);
-	if(ret==-1 && errno!=EEXIST){
-		handle_error("Errore: impossibile creare la directory file system\n");
-	}
-
-	fdfat=open(FAT_FILE_NAME, O_CREAT | O_RDWR, 0600);
-	if(fdfat==-1){
-		handle_error("Errore: impossibile aprire il file contenente la FAT\n");
-	}
-	
-	next_inode=rowCounter(fdfat);*/
-	if(next_inode==0){
+	struct stat* sfat;
+	int exist=stat(FAT_FILE_NAME, sfat); //VERIFICA L'ESISTENZA DEL FAT.txt
+	if(exist){
 		createFile(fdfat, next_inode, FAT_FILE_NAME, FILE_TYPE, GENERIC_CREATOR);
 		createDirectory(fdfat, next_inode, FILE_SYSTEM_DIRECTORY, DIR_TYPE, GENERIC_CREATOR);
+		fdfat=open(FAT_FILE_NAME, O_RDWR);
+		if(fdfat==-1) handle_error("Errore: impossibile aprire il FAT.txt\n");
+		for(int i=0; i<MAX_INODE; i++){
+			char buffer[10];
+			sprintf(buffer, "%d\n", i);
+			write(fdfat, buffer, strlen(buffer));
+		}
+		nextInode(fdfat);
+		//INSERIRE FILE E DIRECTORY SUL FAT.txt
+	}else{
+		
 	}
 	int ret;
 	

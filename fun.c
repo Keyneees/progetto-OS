@@ -15,7 +15,7 @@ void createFile(int fd, int inode, char* filename, char type, char* creator){
 	int ret;
 	if(next_inode<MAX_INODE){
 		char* pathname=filename;//DA DEFINIRE
-		int create=creat(pathname, O_CREAT | O_RDWR);
+		int create=creat(pathname, PERMESSI_FILE);
 		if(create==-1){
 			if(errno==EEXIST){
 				printf("Errore: impossibile creare il file chiamato '%s' perché esiste già un altro file o directory con quel nome\n", filename);
@@ -38,33 +38,6 @@ void createFile(int fd, int inode, char* filename, char type, char* creator){
 			//GESTIONE CREAZIONE AVVENUTA CON SUCCESSO
 			next_inode++; //DA RIVEDERE
 			//AGGIUNGERE INSERIMENTO NEL FILE FAT.txt
-			char elem[100];
-			printf("Preparo la stringa\n");
-			sprintf(elem, "%d %s %c %s\n", inode, filename, type, creator);
-			printf("Stringa: %s\n", elem);
-			int size_elem=strlen(elem);
-			printf("Mi preparo per aggiungere elementi nella fat\n");
-			if(strcmp(creator, GENERIC_CREATOR)==0){
-				addElement(fd, elem, size_elem);
-			}else{
-				int fdfifo=open(FIFO_FOR_FAT, O_WRONLY);
-				if(fdfifo==-1) handle_error("Errore: impossibile connetersi alla fifo di comunicazione con il server\n");
-				
-				int send_bytes=0;
-				while(send_bytes<size_elem){
-					ret=write(fdfifo, elem+send_bytes, size_elem-send_bytes);
-					if(ret==-1){
-						if(errno==EINTR){
-							continue;
-						}else{
-							handle_error("Errore: impossibile mandare il messaggio al server\n");
-						}
-					}else{
-						send_bytes+=ret;
-					}
-				}
-				ret=close(fdfifo);
-			}
 		}
 	}else{
 		//GESTIONE IMPOSSIBLITA' DI CREARE IL FILE
@@ -91,8 +64,8 @@ void eraseFile(char* filename){
 //FUNZIONI PER LE DIRECTORY
 void createDirectory(int fd, int inode, char* directoryname, char type, char* creator){
 	if(next_inode<MAX_INODE){
-		char* pathname;
-		int fddir=mkdir(pathname, 0666);
+		char* pathname=directoryname;
+		int fddir=mkdir(pathname, PERMESSI_DIRECTORY);
 		if(fddir==-1){
 			if(errno==EEXIST){
 				printf("Errore: impossibile creare la directory chiamata '%s' perché esiste già un altro file o directory con quel nome\n", directoryname);
@@ -121,31 +94,7 @@ void createDirectory(int fd, int inode, char* directoryname, char type, char* cr
 			array_fat[next_inode]=filefat;
 			next_inode++;//DA RIVEDERE
 			//AGGIUNGERE INSERIMENTO NEL FILE FAT.txt
-			printf("Aggiunta degli elementi nel file FAT.txt\n");
-			char* elem;
-			sprintf(elem, "%d %s %c %s\n", next_inode, directoryname, type, creator);
-			int size_elem=strlen(elem);
-			if(strcmp(creator, GENERIC_CREATOR)==0){
-				addElement(fd, elem, size_elem);
-			}else{
-				int fdfifo=open(FIFO_FOR_FAT, O_WRONLY);
-				if(fdfifo==-1) handle_error("Errore: impossibile connetersi alla fifo di comunicazione con il server\n");
-				
-				int send_bytes=0;
-				while(send_bytes<size_elem){
-					int ret=write(fdfifo, elem+send_bytes, size_elem-send_bytes);
-					if(ret==-1){
-						if(errno==EINTR){
-							continue;
-						}else{
-							handle_error("Errore: impossibile mandare il messaggio al server\n");
-						}
-					}else{
-						send_bytes+=ret;
-					}
-				}
-				int ret=close(fdfifo);
-			}
+			
 		}
 	}else{
 		//GESTIONE IMPOSSIBILITA' DI CREARE LA DIRECTORY
@@ -180,9 +129,23 @@ void eraseDirectory(char* directoryname){
 
 
 //FUNZIONI EXTRA
-int rowCounter(int fdfile){  //DA RIVEDERE
-	
-	return 0;
+int nextInode(int fdfile){  //DA RIVEDERE
+	int trovato=0;
+	char* buffer;
+	int ret=0;
+	if(!trovato){
+		buffer="";
+		int end=0;
+		int byte_letti=0;
+		while(!end){
+			ret=read(fdfile, buffer+byte_letti, 1);
+			if(ret==-1){
+				handle_error("Impossibile leggere dal file FAT.txt\n");
+			}else{
+				//IMPOSTARE LA LETTURA DEL CARATTERE E VERIFICA SE E' QUELLO DI FINE RIGA O MENO
+			}
+		}
+	}
 }
 
 void addElement(int fd, char* elem, int size_elem){
@@ -192,4 +155,31 @@ void addElement(int fd, char* elem, int size_elem){
 		handle_error("Errore: impossibile aggiornare il file\n");
 	}
 	printf("File aggiornato correttamente\n");
+}
+
+void insertInFatFile(int fd, int inode, char* name, char type, char* creator){
+	int ret;
+	char elem[100];
+	printf("Preparo la stringa\n");
+	sprintf(elem, "%d %s %c %s\n", inode, name, type, creator);
+	printf("Stringa: %s\n", elem);
+	int size_elem=strlen(elem);
+	printf("Mi preparo per aggiungere elementi nella fat\n");
+	int fdfifo=open(FIFO_FOR_FAT, O_WRONLY);
+	if(fdfifo==-1) handle_error("Errore: impossibile connetersi alla fifo di comunicazione con il server\n");			
+	int send_bytes=0;
+	while(send_bytes<size_elem){
+		ret=write(fdfifo, elem+send_bytes, size_elem-send_bytes);
+		if(ret==-1){
+			if(errno==EINTR){
+				continue;
+			}else{
+				handle_error("Errore: impossibile mandare il messaggio al server\n");
+			}
+		}else{
+			send_bytes+=ret;
+		}
+	}
+	ret=close(fdfifo);
+	if(ret==-1) handle_error("Errore: impossibile chiudere la fifo di comunicazione con il server\n");
 }

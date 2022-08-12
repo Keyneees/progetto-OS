@@ -13,6 +13,9 @@
 #define DELETE_CMD "delete"
 #define SEPARATOR " "
 
+#define PERMESSI_FILE 0666
+#define PERMESSI_DIRECTORY 0777
+
 int next_inode;
 char* current_path;
 
