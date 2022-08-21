@@ -1,5 +1,6 @@
 #include "fun.h"
 #include "var.h"
+#include "fun_server.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -26,10 +27,23 @@ int main(){
 			write(fdfat, buffer, strlen(buffer));
 		}
 		nextInode(fdfat);
+		printf("Inode calcolato: %d\n", next_inode);
 		//INSERIRE FILE E DIRECTORY SUL FAT.txt
-	}else{
+		char row[100];
+		sprintf(row, "%d %s %c %s\n", next_inode, FAT_FILE_NAME, FILE_TYPE, GENERIC_CREATOR);
+		printf("row calcolata %s", row);
+		insertInFatFile(row, next_inode);
 		
+		nextInode(fdfat);
+		printf("Inode calcolato: %d\n", next_inode);
+		//INSERIRE FILE E DIRECTORY SUL FAT.txt
+		sprintf(row, "%d %s %c %s\n", next_inode, FILE_SYSTEM_DIRECTORY, DIR_TYPE, GENERIC_CREATOR);
+		insertInFatFile(row, next_inode);
+	}else{
+		//CARICARE LA STRUTTURA CHE TIENE MEMORIA DEI FILE E DELLE DIRECTORY CREATE
 	}
+	nextInode(fdfat);
+	printf("Inode calcolato: %d\n", next_inode);
 	int ret;
 	
 	printf("Server pronto all'avvio\n");

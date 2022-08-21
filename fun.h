@@ -19,6 +19,5 @@ void changeDirectory();
 void listDirectory();
 
 //FUNZIONI EXTRA
-int nextInode(int fdfile);
 void addElement(int fd, char* elem, int size_elem);
-void insertInFatFile(int fd, int inode, char* name, char type, char* creator);
+void sendToServer(int inode, char* name, char type, char* creator);

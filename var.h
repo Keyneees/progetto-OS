@@ -2,7 +2,7 @@
 #define MAX_LENGTH_FILE_NAME 32
 
 #define FAT_FILE_NAME "FAT.txt"
-#define FILE_SYSTEM_DIRECTORY "file system"
+#define FILE_SYSTEM_DIRECTORY "file_system"
 #define GENERIC_CREATOR "server"
 
 #define FILE_TYPE 'F'
@@ -11,10 +11,11 @@
 #define FIFO_FOR_FAT "/sharedfifo"
 
 #define DELETE_CMD "delete"
-#define SEPARATOR " "
+#define SEPARATOR " \n"
 
 #define PERMESSI_FILE 0666
 #define PERMESSI_DIRECTORY 0777
+#define INODE_LIMIT 999
 
 int next_inode;
 char* current_path;
@@ -23,24 +24,24 @@ struct FAT{
 	int inode;
 	int size;
 	char* creator;
-}FAT;
+};
 
 struct file_struct{
 	struct FAT* fat;
 	char* name;
 	struct directory_struct* directory;
 	char* path;
-}file_struct;
+};
 
 struct list_file{
 	struct file_struct* elem;
 	struct list_file* next;
-}list_file;
+};
 
 struct directory_struct{
 	struct file_struct file;
 	struct list_file* list;
-}directory_struct;
+};
 
 struct FAT* array_fat[MAX_INODE];
 struct directory_struct* current_directory;

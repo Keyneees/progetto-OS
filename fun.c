@@ -36,8 +36,11 @@ void createFile(int fd, int inode, char* filename, char type, char* creator){
 			array_fat[next_inode]=filefat;
 			printf("Creazione avvenuta con successo\n");
 			//GESTIONE CREAZIONE AVVENUTA CON SUCCESSO
-			next_inode++; //DA RIVEDERE
+			//next_inode++; //INODE AGGIORNANTO DAL SERVER
 			//AGGIUNGERE INSERIMENTO NEL FILE FAT.txt
+			if(strcmp(creator, GENERIC_CREATOR)!=0){
+				sendToServer(inode, filename, type, creator);
+			}
 		}
 	}else{
 		//GESTIONE IMPOSSIBLITA' DI CREARE IL FILE
@@ -92,8 +95,11 @@ void createDirectory(int fd, int inode, char* directoryname, char type, char* cr
 			
 			printf("Directory create con successo\n");
 			array_fat[next_inode]=filefat;
-			next_inode++;//DA RIVEDERE
+			//next_inode++;//INODE AGGIORNATO DAL SERVER
 			//AGGIUNGERE INSERIMENTO NEL FILE FAT.txt
+			if(strcmp(creator, GENERIC_CREATOR)!=0){
+				sendToServer(inode, directoryname, type, creator);
+			}
 			
 		}
 	}else{
@@ -129,24 +135,6 @@ void eraseDirectory(char* directoryname){
 
 
 //FUNZIONI EXTRA
-int nextInode(int fdfile){  //DA RIVEDERE
-	int trovato=0;
-	char* buffer;
-	int ret=0;
-	if(!trovato){
-		buffer="";
-		int end=0;
-		int byte_letti=0;
-		while(!end){
-			ret=read(fdfile, buffer+byte_letti, 1);
-			if(ret==-1){
-				handle_error("Impossibile leggere dal file FAT.txt\n");
-			}else{
-				//IMPOSTARE LA LETTURA DEL CARATTERE E VERIFICA SE E' QUELLO DI FINE RIGA O MENO
-			}
-		}
-	}
-}
 
 void addElement(int fd, char* elem, int size_elem){
 	printf("Sono in addElement\n");
@@ -157,7 +145,7 @@ void addElement(int fd, char* elem, int size_elem){
 	printf("File aggiornato correttamente\n");
 }
 
-void insertInFatFile(int fd, int inode, char* name, char type, char* creator){
+void sendToServer(int inode, char* name, char type, char* creator){
 	int ret;
 	char elem[100];
 	printf("Preparo la stringa\n");
