@@ -6,18 +6,19 @@
 #define handle_error(msg)           do { printf(msg); exit(EXIT_FAILURE); } while (0)
 
 //FUNZIONI DA IMPLEMENTARE PER I FILE
-void createFile(int fd, int inode, char* filename, char type, char* creator);
-void eraseFile(char* filename);
+void createFile(int inode, char* filename, char type, char* creator);
+void eraseFile(int inode);
 void writeFile();
 void readFile();
 void seekFile();
 
 //FUNZIONI DA IMPLEMENTARE PER LE DIRECTORY
-void createDirectory(int fd, int inode, char* directoryname, char type, char* creator);
-void eraseDirectory(char* directoryname);
+void createDirectory(int inode, char* directoryname, char type, char* creator);
+void eraseDirectory(int inode);
 void changeDirectory();
 void listDirectory();
 
 //FUNZIONI EXTRA
 void addElement(int fd, char* elem, int size_elem);
-void sendToServer(int inode, char* name, char type, char* creator);
+void sendToServer(char* elem);
+void sizeUpdate(int inode);

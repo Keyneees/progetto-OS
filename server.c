@@ -10,15 +10,19 @@
 #include <unistd.h>
 #include <stdio.h>
 
+int inode_fat;
 int fdfat;
 char* buf;
 
 int main(){
-	struct stat* sfat;
-	int exist=stat(FAT_FILE_NAME, sfat); //VERIFICA L'ESISTENZA DEL FAT.txt
-	if(exist){
-		createFile(fdfat, next_inode, FAT_FILE_NAME, FILE_TYPE, GENERIC_CREATOR);
-		createDirectory(fdfat, next_inode, FILE_SYSTEM_DIRECTORY, DIR_TYPE, GENERIC_CREATOR);
+	/*struct stat* sfat;
+	int exist=stat(FAT_FILE_NAME, sfat); //VERIFICA L'ESISTENZA DEL FAT.txt*/
+	current_path="/";
+	FILE* exist=fopen(FAT_FILE_NAME, "r");
+	if(exist==NULL){
+		printf("Il file non esiste\n");
+		createFile(next_inode, FAT_FILE_NAME, FILE_TYPE, GENERIC_CREATOR);
+		createDirectory(next_inode, FILE_SYSTEM_DIRECTORY, DIR_TYPE, GENERIC_CREATOR);
 		fdfat=open(FAT_FILE_NAME, O_RDWR);
 		if(fdfat==-1) handle_error("Errore: impossibile aprire il FAT.txt\n");
 		for(int i=0; i<MAX_INODE; i++){
@@ -28,25 +32,31 @@ int main(){
 		}
 		nextInode(fdfat);
 		printf("Inode calcolato: %d\n", next_inode);
+		inode_fat=next_inode;
 		//INSERIRE FILE E DIRECTORY SUL FAT.txt
 		char row[100];
-		sprintf(row, "%d %s %c %s\n", next_inode, FAT_FILE_NAME, FILE_TYPE, GENERIC_CREATOR);
+		sprintf(row, "%d %s %s %c %s %d %d\n", next_inode, FAT_FILE_NAME, current_path, FILE_TYPE, GENERIC_CREATOR, 0, SERVER_FATHER);
 		printf("row calcolata %s", row);
 		insertInFatFile(row, next_inode);
 		
 		nextInode(fdfat);
 		printf("Inode calcolato: %d\n", next_inode);
 		//INSERIRE FILE E DIRECTORY SUL FAT.txt
-		sprintf(row, "%d %s %c %s\n", next_inode, FILE_SYSTEM_DIRECTORY, DIR_TYPE, GENERIC_CREATOR);
+		sprintf(row, "%d %s %s %c %s %d %d\n", next_inode, FILE_SYSTEM_DIRECTORY, current_path, DIR_TYPE, GENERIC_CREATOR, 0, SERVER_FATHER);
 		insertInFatFile(row, next_inode);
+		
+		sizeUpdate(inode_fat);
 	}else{
+		printf("Il file esiste\n");
 		//CARICARE LA STRUTTURA CHE TIENE MEMORIA DEI FILE E DELLE DIRECTORY CREATE
+		loadFAT();
 	}
 	nextInode(fdfat);
 	printf("Inode calcolato: %d\n", next_inode);
 	int ret;
 	
 	printf("Server pronto all'avvio\n");
+	current_path=*FILE_SYSTEM_DIRECTORY+"/";
 	
 	while(1){
 		printf("In attesa dei comandi degli utenti...\n");
@@ -78,11 +88,20 @@ int main(){
 		if(ret==-1) handle_error("Errore: impossibile eliminare la fifo\n");
 		
 		char* elem=strtok(buf, SEPARATOR);
+		printf("Primo elemento ricevuto %s\n", elem);
 		printf("%s\n", elem);
 		if(strcmp(elem, DELETE_CMD)==0){
 			//GESTIONE ELIMINAZIONE DELLA RIGA
+			int inode=strtol(strtok(NULL, SEPARATOR), NULL, 10);
+			deleteInFatFile(inode);
+			sizeUpdate(inode_fat);
+			nextInode(fdfat);
 		}else{
 			//GESTIONE INSERIMENTO DELLA RIGA
+			int inode=strtol(elem, NULL, 10);
+			insertInFatFile(elem, inode);
+			sizeUpdate(inode_fat);
+			nextInode(fdfat);
 		} 
 	}
 }
