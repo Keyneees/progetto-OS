@@ -238,7 +238,14 @@ void sizeUpdate(int inode){
 		printf("Fatto...");
 		printf("Dimensione dell'elemento di inode %d: %ld\n", inode, s.st_size);
 		array_fat[inode]->size=s.st_size;
-	
+		
+		if(strcmp(array_fat[inode]->creator,GENERIC_CREATOR)){
+			char elem[100];
+			sprintf(elem, "%s %d %s %s %c %s %d %d\n", UPDATE_CMD, inode, array_fat[inode]->sfile->sfile->nome, 
+			array_fat[inode]->sfile->sfile->path, array_fat[inode]->sfile->sfile->type, array_fat[inode]->creator, array_fat[inode]->size, 
+			array_fat[inode]->inode_padre);
+			sendToServer(elem);
+		}
 		sizeUpdate(array_fat[inode]->inode_padre);
 	}
 }

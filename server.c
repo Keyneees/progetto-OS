@@ -93,15 +93,21 @@ int main(){
 		if(strcmp(elem, DELETE_CMD)==0){
 			//GESTIONE ELIMINAZIONE DELLA RIGA
 			int inode=strtol(strtok(NULL, SEPARATOR), NULL, 10);
-			deleteInFatFile(inode);
-			sizeUpdate(inode_fat);
-			nextInode(fdfat);
-		}else{
-			//GESTIONE INSERIMENTO DELLA RIGA
-			int inode=strtol(elem, NULL, 10);
+			char elem[100];
+			sprintf(elem, "%d\n", inode);
 			insertInFatFile(elem, inode);
 			sizeUpdate(inode_fat);
 			nextInode(fdfat);
-		} 
+		}else if(strcmp(elem, UPDATE_CMD)==0){
+			//GESTIONE AGGIORNAMENTO DIMESIONE DI UNA RIGA DEL FILE FAT.txt
+			int inode=strtol(strtok(NULL, SEPARATOR), NULL, 10);
+			insertInFatFile(buf, inode);
+		}else{
+			//GESTIONE INSERIMENTO DELLA RIGA
+			int inode=strtol(elem, NULL, 10);
+			insertInFatFile(buf, inode);
+			sizeUpdate(inode_fat);
+			nextInode(fdfat);
+		}
 	}
 }

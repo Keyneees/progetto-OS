@@ -3,7 +3,7 @@
 #include <fcntl.h>
 
 
-#define handle_error(msg)           do { printf(msg); exit(EXIT_FAILURE); } while (0)
+#define handle_error(msg)           do { printf(msg); exit(EXIT_FAILURE); } while (0) //RISCRIVI FATTA BENE
 
 //FUNZIONI DA IMPLEMENTARE PER I FILE
 void createFile(int inode, char* filename, char type, char* creator);

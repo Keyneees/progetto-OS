@@ -12,13 +12,12 @@
 #define FIFO_FOR_FAT "/sharedfifo"
 
 #define DELETE_CMD "delete"
+#define UPDATE_CMD "update"
 #define SEPARATOR " \n"
 
 #define PERMESSI_FILE 0666
 #define PERMESSI_DIRECTORY 0777
 #define INODE_LIMIT 999
-
-
 
 int next_inode;
 char* current_path;

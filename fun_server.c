@@ -70,47 +70,10 @@ void insertInFatFile(char* row, int inode){
 	if(ret==-1) handle_error("Errore: impossibile rimuovere il file di appoggio\n");
 }
 
-void deleteInFatFile(int inode){
-	FILE* fdfat=fopen(FAT_FILE_NAME, "r+");
-	if(fdfat==NULL) handle_error("Errore: impossibile aprire in letture e in scrittura il file FAT.txt\n");
-	FILE* fd=fopen(AUX, "w+");
-	if(fd==NULL) handle_error("Errore: impossibile aprire in letture e in scrittura il file di appoggio\n");
-	char buffer[100];
-	for(int i=0; i<MAX_INODE; i++){
-		fgets(buffer, 100, fdfat);
-		if(i==inode){
-			char row[100];
-			sprintf(row, "%d\n", inode);
-			fputs(row, fd);		
-		}else{
-			fputs(buffer, fd);
-		}
-	}
-	int ret=fclose(fdfat);
-	if(ret==-1) handle_error("Errore: impossibile chiudere il file FAT.txt\n");
-	ret=fclose(fd);
-	if(ret==-1) handle_error("Errore: impossibile chiudere il file di appoggio\n");
-	
-	fdfat=fopen(FAT_FILE_NAME, "w");
-	if(fdfat==NULL) handle_error("Errore: impossibile aprire in letture e in scrittura il file FAT.txt\n");
-	fd=fopen(AUX, "r");
-	if(fd==NULL) handle_error("Errore: impossibile aprire in letture e in scrittura il file di appoggio\n");
-	for(int i=0; i<MAX_INODE; i++){
-		fgets(buffer, 100, fd);
-		fputs(buffer, fdfat);
-	}
-	ret=fclose(fdfat);
-	if(ret==-1) handle_error("Errore: impossibile chiudere il file FAT.txt\n");
-	ret=fclose(fd);
-	if(ret==-1) handle_error("Errore: impossibile chiudere il file di appoggio\n");
-	ret=remove(AUX);
-	if(ret==-1) handle_error("Errore: impossibile rimuovere il file di appoggio\n");
-}
-
 void loadFAT(){
 	FILE* FAT=fopen(FAT_FILE_NAME, "r");
 	if(FAT==NULL) handle_error("Errore: impossibile aprire FAT.txt in lettura\n");
-	char* buffer;
+	char buffer[100];
 	char* token;
 	for(int i=0; i<MAX_INODE; i++){
 		fgets(buffer, 100, FAT);
@@ -154,14 +117,13 @@ void loadFAT(){
 	int inode;
 	int inode_padre;
 	for(int i=0; i<MAX_INODE; i++){
-		inode=array_fat[i]->inode;
-		inode_padre=array_fat[i]->inode_padre;
-		if(inode_padre>=0 && inode_padre<MAX_INODE){
-			array_fat[inode_padre]->sfile->element[inode]=1;
+		if(array_fat[i]!=NULL){
+			inode=array_fat[i]->inode;
+			inode_padre=array_fat[i]->inode_padre;
+			if(inode_padre>=0 && inode_padre<MAX_INODE){
+				array_fat[inode_padre]->sfile->element[inode]=1;
+			}
 		}
 	}
 }
 
-void updateFat(int inode, int size){
-	
-}
