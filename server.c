@@ -4,60 +4,64 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <pthread.h>
 
 int inode_fat;
 int fdfat;
-char* buf;
+char buf[100];
 
 int main(){
-	/*struct stat* sfat;
-	int exist=stat(FAT_FILE_NAME, sfat); //VERIFICA L'ESISTENZA DEL FAT.txt*/
+	int ret;
 	current_path="/";
 	FILE* exist=fopen(FAT_FILE_NAME, "r");
 	if(exist==NULL){
 		printf("Il file non esiste\n");
-		createFile(next_inode, FAT_FILE_NAME, FILE_TYPE, GENERIC_CREATOR);
-		createDirectory(next_inode, FILE_SYSTEM_DIRECTORY, DIR_TYPE, GENERIC_CREATOR);
+		createFile(0, FAT_FILE_NAME, FILE_TYPE, GENERIC_CREATOR);
+		
 		fdfat=open(FAT_FILE_NAME, O_RDWR);
 		if(fdfat==-1) handle_error("Errore: impossibile aprire il FAT.txt\n");
 		for(int i=0; i<MAX_INODE; i++){
-			char buffer[10];
+			char buffer[100];
 			sprintf(buffer, "%d\n", i);
 			write(fdfat, buffer, strlen(buffer));
 		}
-		nextInode(fdfat);
-		printf("Inode calcolato: %d\n", next_inode);
 		inode_fat=next_inode;
+		ret=close(fdfat);
+		if(ret==-1) handle_error("Errore: impossibile chiudere il FAT.txt\n");
 		//INSERIRE FILE E DIRECTORY SUL FAT.txt
 		char row[100];
-		sprintf(row, "%d %s %s %c %s %d %d\n", next_inode, FAT_FILE_NAME, current_path, FILE_TYPE, GENERIC_CREATOR, 0, SERVER_FATHER);
+		sprintf(row, "%d %s %s %s %s %d %d\n", next_inode, FAT_FILE_NAME, current_path, FILE_TYPE, GENERIC_CREATOR, 0, SERVER_FATHER);
 		printf("row calcolata %s", row);
 		insertInFatFile(row, next_inode);
 		
-		nextInode(fdfat);
-		printf("Inode calcolato: %d\n", next_inode);
+		nextInode();
+		createDirectory(next_inode, FILE_SYSTEM_DIRECTORY, DIR_TYPE, GENERIC_CREATOR);
 		//INSERIRE FILE E DIRECTORY SUL FAT.txt
-		sprintf(row, "%d %s %s %c %s %d %d\n", next_inode, FILE_SYSTEM_DIRECTORY, current_path, DIR_TYPE, GENERIC_CREATOR, 0, SERVER_FATHER);
+		sprintf(row, "%d %s %s %s %s %d %d\n", next_inode, FILE_SYSTEM_DIRECTORY, current_path, DIR_TYPE, GENERIC_CREATOR, 0, SERVER_FATHER);
 		insertInFatFile(row, next_inode);
 		
 		sizeUpdate(inode_fat);
+		nextInode();
 	}else{
 		printf("Il file esiste\n");
 		//CARICARE LA STRUTTURA CHE TIENE MEMORIA DEI FILE E DELLE DIRECTORY CREATE
 		loadFAT();
 	}
-	nextInode(fdfat);
-	printf("Inode calcolato: %d\n", next_inode);
-	int ret;
+	stampaArray();
+	nextInode();
 	
+	printf("Caricamento inode padre...");
+	sharing_father();
+	printf(" Effettuato\n");
 	printf("Server pronto all'avvio\n");
 	current_path=*FILE_SYSTEM_DIRECTORY+"/";
-	
+	unlink(FIFO_FOR_FAT);
 	while(1){
 		printf("In attesa dei comandi degli utenti...\n");
 		ret=mkfifo(FIFO_FOR_FAT, 0600);
@@ -68,20 +72,20 @@ int main(){
 		
 		int bytes_read=0;
 		while(1){
-			bytes_read=read(fdfifo, buf+bytes_read, 1);
+			ret=read(fdfifo, buf+bytes_read, 100);
 			if(bytes_read==-1){
 				if(errno==EINTR){
 					continue;
 				}else{
 					handle_error("Errore: impossibile leggere il messaggio dell'utente\n");
 				}
-			}else if(bytes_read==0){
+			}else if(ret==0){
 				break;
 			}else{
-				bytes_read++;
+				bytes_read+=ret;
 			}
 		}
-		
+		printf("Messaggio ricevuto %s\n", buf);
 		ret=close(fdfifo);
 		if(ret==-1) handle_error("Errore: impossibile chiudere il descrittore della fifo\n");
 		ret=unlink(FIFO_FOR_FAT);
@@ -89,8 +93,23 @@ int main(){
 		
 		char* elem=strtok(buf, SEPARATOR);
 		printf("Primo elemento ricevuto %s\n", elem);
-		printf("%s\n", elem);
-		if(strcmp(elem, DELETE_CMD)==0){
+		
+		if(strcmp(elem, CREAT_CMD)==0){
+			//CREAZIONE
+			char* nome=strtok(NULL, SEPARATOR);
+			char* type=strtok(NULL, SEPARATOR);
+			char* creator=strtok(NULL, SEPARATOR);
+			if(strcmp(DIR_TYPE, type)==0){
+				createDirectory(next_inode, nome, type, creator);
+			}else{
+				createFile(next_inode, nome, type, creator);
+			}
+			char row[100];
+			sprintf(row, "%d %s %s %s %s %d %d\n", next_inode, nome, "da_sistemare", type, creator, 0, 99999); //TROVARE IL MODO PER SOSTITUIRE current_path & 99999
+			insertInFatFile(row, next_inode);
+			sizeUpdate(inode_fat);
+			nextInode();
+		}else if(strcmp(elem, DELETE_CMD)==0){
 			//GESTIONE ELIMINAZIONE DELLA RIGA
 			int inode=strtol(strtok(NULL, SEPARATOR), NULL, 10);
 			char elem[100];
@@ -110,4 +129,6 @@ int main(){
 			nextInode(fdfat);
 		}
 	}
+	ret=shm_unlink(SHMEM_FOR_INFO);
+	if(ret==-1) handle_error("Errore: impossibile fare l'unlink della memoria condivisa\n");
 }

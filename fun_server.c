@@ -4,22 +4,22 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 
-void nextInode(int fdfile){  //DA RIVEDERE
+void nextInode(){  //DA RIVEDERE
 	int trovato=0;
 	int i=0;
 	char buffer[80];
 	int ret=0;
 	FILE* fdfat=fopen(FAT_FILE_NAME, "r");
 	if(fdfat==NULL) handle_error("Errore: impossibile aprire il file in lettura");
-	while(buffer && !trovato){
+	while(*buffer!=EOF && !trovato){
 		fgets(buffer, 80, fdfat);
-		printf("buffer: %s\n", buffer);
 		char* str=strtok(buffer, SEPARATOR);
 		str=strtok(NULL, SEPARATOR);
 		if(!str){
@@ -31,6 +31,7 @@ void nextInode(int fdfile){  //DA RIVEDERE
 	if(!trovato){
 		next_inode=INODE_LIMIT;
 	}
+	printf("Inode calcolato: %d\n", next_inode);
 	ret=fclose(fdfat);
 	if(ret==-1) handle_error("Errore: impossibile chiudere il file FAT.txt\n");
 }
@@ -79,51 +80,58 @@ void loadFAT(){
 		fgets(buffer, 100, FAT);
 		token=strtok(buffer, SEPARATOR);
 		token=strtok(NULL, SEPARATOR);
-		if(token!=NULL){
+		if(token!=NULL){			
 			char* nome=token;
+			printf("%s\n", nome);
 			char* path=strtok(NULL, SEPARATOR);
 			char* tipo=strtok(NULL, SEPARATOR);
 			char* creatore=strtok(NULL, SEPARATOR);
 			int size=strtol(strtok(NULL, SEPARATOR), NULL, 10);
 			int padre=strtol(strtok(NULL, SEPARATOR), NULL, 10);
-			struct fat* fat_elem=(struct fat*)malloc(sizeof(struct fat));
-			fat_elem->inode=i;
-			fat_elem->size=size;
-			fat_elem->creator=creatore;
-			fat_elem->inode_padre=padre;
-			if(*tipo==DIR_TYPE){
-				struct sdirectory* sdir=(struct sdirectory*)malloc(sizeof(struct sdirectory));
-				sdir->sfile=(struct sfile*)malloc(sizeof(struct sfile));
-				sdir->sfile->nome=nome;
-				sdir->sfile->path=path;
-				sdir->sfile->type=DIR_TYPE;
-				sdir->element=calloc(MAX_INODE, sizeof(int*));
-				fat_elem->sfile=sdir;
-			}else{
-				struct sfile* sfile=(struct sfile*)malloc(sizeof(struct sfile));
-				sfile->nome=nome;
-				sfile->path=path;
-				sfile->type=FILE_TYPE;
-				fat_elem->sfile=(struct sdirectory*)sfile;
-			}
-			array_fat[i]=fat_elem;
+			array_fat[i]=(struct fat*)malloc(sizeof(struct fat));
+			array_fat[i]->inode=i;
+			array_fat[i]->name=(char*)malloc(sizeof(char)*strlen(nome));
+			strcpy(array_fat[i]->name, nome);
+			array_fat[i]->path=(char*)malloc(sizeof(char)*strlen(path));
+			strcpy(array_fat[i]->path, path);
+			array_fat[i]->type=(char*)malloc(sizeof(char)*strlen(tipo)); 
+			strcpy(array_fat[i]->type, tipo);
+			//array_fat[i]->type=tipo;
+			array_fat[i]->size=size;//DA RIVEDERE
+			array_fat[i]->creator=(char*)malloc(sizeof(char)*strlen(creatore));
+			strcpy(array_fat[i]->creator, creatore);
+			array_fat[i]->inode_padre=padre;
+			printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s\n", array_fat[i]->inode, array_fat[i]->size, array_fat[i]->creator, array_fat[i]->name, array_fat[i]->path, array_fat[i]->type);
 		}else{
 			array_fat[i]=NULL;
 		}
 	}
 	int ret=fclose(FAT);
 	if(ret==-1) handle_error("Errore: impossibile chiudere FAT.txt\n");
-	
-	int inode;
-	int inode_padre;
+}
+
+void sharing_father(){
+	int size=sizeof(struct fat);
+	int fd=shm_open(SHMEM_FOR_INFO, O_CREAT|O_RDWR, 0600);
+	if(fd==-1) handle_error("Errore: impossibile creare la zona di memoria condivisa\n");
+	int ret=ftruncate(fd, size);
+	if(ret==-1) handle_error("Errore: impossibile impostare una dimensione della zona di memoria condivisa\n");
+	struct fat* shared=(struct fat*)mmap(0, size, PROT_WRITE, MAP_SHARED, fd, 0);
+	if(shared==MAP_FAILED) handle_error("Errore: impossibile mappa la zona di memoria condivisa\n");
+	shared=array_fat[1];
+	printf("Inode padre %p\n", shared);
+	ret=close(fd);
+	if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor della memoria condivisa");	
+}
+
+void stampaArray(){
+	printf("Stampa array:\n");
 	for(int i=0; i<MAX_INODE; i++){
 		if(array_fat[i]!=NULL){
-			inode=array_fat[i]->inode;
-			inode_padre=array_fat[i]->inode_padre;
-			if(inode_padre>=0 && inode_padre<MAX_INODE){
-				array_fat[inode_padre]->sfile->element[inode]=1;
-			}
+			printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s\n", array_fat[i]->inode, array_fat[i]->size, array_fat[i]->creator,
+				 array_fat[i]->name, array_fat[i]->path, array_fat[i]->type);
+		}else{
+			//printf("Inode %d, NULL\n", i);
 		}
 	}
 }
-

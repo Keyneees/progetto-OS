@@ -12,3 +12,5 @@
 #define EXIT_CMD "exit"
 
 void printInfo();
+void sharing_father();
+void sendToServer(char* elem);

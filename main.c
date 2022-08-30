@@ -15,7 +15,7 @@ int main(){
 	scanf("%s", user);
 	while(strcmp(GENERIC_CREATOR, user)==0){
 		printf("Errore: non è possibile usare il nome %s. Si prega di inserire un nome diverso\n", user);
-		printf("%s", CMD_LINE);
+		printf("%sInserire il nome per il login: ", CMD_LINE);
 		scanf("%s", user);
 	}
 	printf("Benvenuto %s nel sistema FAT_OS\n", user);
@@ -23,7 +23,10 @@ int main(){
 	
 	char cmd[50];
 	char info[50];
+	char elem[100];
 	int e=0;
+	sharing_father();
+	printf("inode padre %d\n", fat_padre->inode);
 	while(!e){
 		printf("%s", CMD_LINE);
 		scanf("%s", cmd);
@@ -31,7 +34,9 @@ int main(){
 		if(strcmp(CREATE_FILE_CMD, cmd)==0){
 			printf("%sInserire il nome del file da creare: ", CMD_LINE);
 			scanf("%s", info);
-			createFile(next_inode, info, FILE_TYPE, user);
+			sprintf(elem, "%s %s %s %s", CREAT_CMD, info, FILE_TYPE, user);
+			sendToServer(elem);
+			
 		}else if(strcmp(ERASE_FILE_CMD, cmd)==0){
 			printf("Erase file digitato\n");
 		}else if(strcmp(WRITE_FILE_CMD, cmd)==0){
@@ -43,7 +48,8 @@ int main(){
 		}else if(strcmp(CREATE_DIRECTORY_CMD, cmd)==0){
 			printf("%sInserire il nome della directory da creare: ", CMD_LINE);
 			scanf("%s", info);
-			createDirectory(next_inode, info, DIR_TYPE, user);
+			sprintf(elem, "%s %s %s %s", CREAT_CMD, info, DIR_TYPE, user);
+			sendToServer(elem);
 		}else if(strcmp(ERASE_DIRECTORY_CMD, cmd)==0){
 			printf("Erase directory digitato\n");
 		}else if(strcmp(CHANGE_DIRECTORY_CMD, cmd)==0){
