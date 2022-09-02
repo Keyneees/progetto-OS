@@ -90,15 +90,15 @@ void loadFAT(){
 			int padre=strtol(strtok(NULL, SEPARATOR), NULL, 10);
 			array_fat[i]=(struct fat*)malloc(sizeof(struct fat));
 			array_fat[i]->inode=i;
-			array_fat[i]->name=(char*)malloc(sizeof(char)*strlen(nome));
+			//array_fat[i]->name=(char*)malloc(sizeof(char)*strlen(nome));
 			strcpy(array_fat[i]->name, nome);
-			array_fat[i]->path=(char*)malloc(sizeof(char)*strlen(path));
+			//array_fat[i]->path=(char*)malloc(sizeof(char)*strlen(path));
 			strcpy(array_fat[i]->path, path);
-			array_fat[i]->type=(char*)malloc(sizeof(char)*strlen(tipo)); 
+			//array_fat[i]->type=(char*)malloc(sizeof(char)*strlen(tipo)); 
 			strcpy(array_fat[i]->type, tipo);
 			//array_fat[i]->type=tipo;
 			array_fat[i]->size=size;//DA RIVEDERE
-			array_fat[i]->creator=(char*)malloc(sizeof(char)*strlen(creatore));
+			//array_fat[i]->creator=(char*)malloc(sizeof(char)*strlen(creatore));
 			strcpy(array_fat[i]->creator, creatore);
 			array_fat[i]->inode_padre=padre;
 			printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s\n", array_fat[i]->inode, array_fat[i]->size, array_fat[i]->creator, array_fat[i]->name, array_fat[i]->path, array_fat[i]->type);
@@ -111,15 +111,29 @@ void loadFAT(){
 }
 
 void sharing_father(){
-	int size=sizeof(struct fat);
-	int fd=shm_open(SHMEM_FOR_INFO, O_CREAT|O_RDWR, 0600);
+	int size=sizeof(struct fat)+sizeof(char)*192;
+	/*struct fat* shared=(struct fat*)malloc(sizeof(struct fat));
+	shared->name=(char*)malloc(sizeof(char)*64);
+	shared->path=(char*)malloc(sizeof(char)*64);
+	shared->type=(char*)malloc(sizeof(char)*64);
+	shared->creator=(char*)malloc(sizeof(char)*64);*/
+	int fd=shm_open(SHMEM_FOR_INFO, O_CREAT|O_RDWR, 0666);
 	if(fd==-1) handle_error("Errore: impossibile creare la zona di memoria condivisa\n");
 	int ret=ftruncate(fd, size);
 	if(ret==-1) handle_error("Errore: impossibile impostare una dimensione della zona di memoria condivisa\n");
 	struct fat* shared=(struct fat*)mmap(0, size, PROT_WRITE, MAP_SHARED, fd, 0);
 	if(shared==MAP_FAILED) handle_error("Errore: impossibile mappa la zona di memoria condivisa\n");
-	shared=array_fat[1];
-	printf("Inode padre %p\n", shared);
+	printf("Elemento caricato\n");
+	memcpy(shared, array_fat[1], size);
+	strcpy(shared->name, array_fat[1]->name);
+	strcpy(shared->path, array_fat[1]->path);
+	strcpy(shared->type, array_fat[1]->type);
+	strcpy(shared->creator, array_fat[1]->creator);
+	printf("Inode padre %d\n", shared->inode);
+	printf("Nome padre %s\n", shared->name);
+	printf("Path padre %s\n", shared->path);
+	printf("Type padre %s\n", shared->type);
+	printf("Creator padre %s\n", shared->creator);
 	ret=close(fd);
 	if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor della memoria condivisa");	
 }
@@ -132,6 +146,24 @@ void stampaArray(){
 				 array_fat[i]->name, array_fat[i]->path, array_fat[i]->type);
 		}else{
 			//printf("Inode %d, NULL\n", i);
+		}
+	}
+}
+
+void searchElement(char* name, char* path, char* type){
+	int trovato=0;
+	int inode;
+	for(int i=0; i<MAX_INODE && !trovato; i++){
+		if(strcmp(array_fat[i]->name, name)==0 && strcmp(array_fat[i]->path, path)==0){
+			inode=array_fat[i]->inode;
+			trovato=1;
+		}
+	}
+	if(trovato){
+		if(strcmp(type, DIR_TYPE)==0){
+			eraseDirectory(inode);
+		}else{
+			eraseFile(inode);
 		}
 	}
 }

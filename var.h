@@ -26,12 +26,12 @@ char* current_path;
 
 struct fat{
 	int inode;
-	char* name;
-	char* path;
-	char* type;
+	char name[64];
+	char path[64];
+	char type[64];
 	int size; //DA VALUTARE
 	int inode_padre;
-	char* creator;
+	char creator[64];
 };
 
 struct fat* array_fat[MAX_INODE];

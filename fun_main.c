@@ -26,20 +26,25 @@ void printInfo(){
 }
 
 void sharing_father(){
+	fat_padre=(struct fat*)malloc(sizeof(struct fat));
+	/*fat_padre->name=(char*)malloc(sizeof(char)*64);
+	fat_padre->path=(char*)malloc(sizeof(char)*64);
+	fat_padre->type=(char*)malloc(sizeof(char)*64);
+	fat_padre->creator=(char*)malloc(sizeof(char)*64);*/
 	int fd=shm_open(SHMEM_FOR_INFO, O_RDONLY, 0666);
 	if(fd==-1) handle_error("Errore: impossibile aprire la memoria condivisa\n");
-	int size=sizeof(struct fat*);
+	int size=sizeof(struct fat)+sizeof(char)*256;
 	fat_padre=(struct fat*)mmap(0, size, PROT_READ, MAP_SHARED, fd, 0);
 	if(fat_padre==MAP_FAILED) handle_error("Errore: impossibile recuperare dati dal memoria condivisa\n");
-	printf("Padre ricevuto %p", fat_padre);
 	int ret=close(fd);
 	if(ret==-1) handle_error("Errore: impossibile chiudere la memoria condivisa\n");
+	
 }
 
 void sendToServer(char* elem){
 	int ret;
 	int size_elem=strlen(elem);
-	printf("Mi preparo per aggiungere elementi nella fat\n");
+	//printf("Mi preparo per aggiungere elementi nella fat\n");
 	int fdfifo=open(FIFO_FOR_FAT, O_WRONLY);
 	if(fdfifo==-1) handle_error("Errore: impossibile connetersi alla fifo di comunicazione con il server\n");			
 	int send_bytes=0;

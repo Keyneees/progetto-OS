@@ -1,4 +1,5 @@
 #include "fun.h"
+
 #include "var.h"
 #include "fun_server.h"
 
@@ -12,10 +13,20 @@
 #include <unistd.h>
 
 //FUNZONI PER I FILE
-void createFile(int inode, char* filename, char* type, char* creator){
+void createFile(int inode, char* filename, char* type, char* creator, char* path, int inode_padre){
 	int ret;
 	if(next_inode<MAX_INODE){
-		int create=creat(filename, PERMESSI_FILE);
+		char* location;
+		if(strcmp(path, "/")==0){
+			location=(char*)malloc(sizeof(char)*(strlen(filename)));
+			strcpy(location, filename);
+		}else{
+			location=(char*)malloc(sizeof(char)*(strlen(path)+strlen(filename)+2));
+			strcpy(location, path);
+			strcat(location, filename);
+		}
+		int create=creat(location, PERMESSI_FILE);
+		free(location);
 		if(create==-1){
 			if(errno==EEXIST){
 				printf("Errore: impossibile creare il file chiamato '%s' perché esiste già un altro file o directory con quel nome\n", filename);
@@ -27,23 +38,17 @@ void createFile(int inode, char* filename, char* type, char* creator){
 			printf("Creazione della struttura\n");
 			array_fat[next_inode]=(struct fat*)malloc(sizeof(struct fat));
 			array_fat[next_inode]->inode=next_inode;
-			array_fat[next_inode]->name=(char*)malloc(sizeof(char)*strlen(filename));
+			//array_fat[next_inode]->name=(char*)malloc(sizeof(char)*strlen(filename));
 			strcpy(array_fat[next_inode]->name, filename);
-			array_fat[next_inode]->path=(char*)malloc(sizeof(char)*strlen(creator));
+			//array_fat[next_inode]->path=(char*)malloc(sizeof(char)*strlen(creator));
 			strcpy(array_fat[next_inode]->path, current_path);
 			//array_fat[next_inode]->type=(char*)malloc(sizeof(char));
-			//strcpy(array_fat[next_inode]->type, type);
-			array_fat[next_inode]->type=type;
+			strcpy(array_fat[next_inode]->type, type);
+			//array_fat[next_inode]->type=type;
 			array_fat[next_inode]->size=0;
-			printf("Inserimento del creatore...");
-			array_fat[next_inode]->creator=(char*)malloc(sizeof(char)*strlen(creator));
+			//array_fat[next_inode]->creator=(char*)malloc(sizeof(char)*strlen(creator));
 			strcpy(array_fat[next_inode]->creator, creator);
-			printf("Riuscita\n");
-			if(strcmp(GENERIC_CREATOR, creator)==0){
-				array_fat[next_inode]->inode_padre=SERVER_FATHER;
-			}else{
-				array_fat[next_inode]->inode_padre=99999;
-			}
+			array_fat[next_inode]->inode_padre=inode_padre;
 			printf("Elemento inserito\n");
 		}
 	}else{
@@ -60,10 +65,10 @@ void eraseFile(int inode){
 	if(ret==-1){
 		printf("Il file %s non esiste nella directory corrente\n", filename);
 	}else{
-		free(array_fat[inode]->name);
+		/*free(array_fat[inode]->name);
 		free(array_fat[inode]->path);
 		free(array_fat[inode]->type);
-		free(array_fat[inode]->creator);
+		free(array_fat[inode]->creator);*/
 		free(array_fat[inode]);
 		array_fat[inode]=NULL;
 		
@@ -77,11 +82,21 @@ void eraseFile(int inode){
 }
 
 //FUNZIONI PER LE DIRECTORY
-void createDirectory(int inode, char* directoryname, char* type, char* creator){
+void createDirectory(int inode, char* directoryname, char* type, char* creator, char* path, int inode_padre){
 	if(next_inode<MAX_INODE){
-		printf("lol");
-		int fddir=mkdir(directoryname, PERMESSI_DIRECTORY);
-		printf("Qui\n");
+		char* location;
+		if(strcmp(path, "/")==0){
+			location=(char*)malloc(sizeof(char)*(strlen(directoryname)));
+			strcpy(location, directoryname);
+		}else{
+			location=(char*)malloc(sizeof(char)*(strlen(path)+strlen(directoryname)+2));
+			strcpy(location, path);
+			strcat(location, directoryname);
+		}
+		printf("Elementi dati -> path %s, nome %s", path, directoryname);
+		printf("Location calcolata %s\n", location);
+		int fddir=mkdir(location, PERMESSI_DIRECTORY);
+		free(location);
 		if(fddir==-1){
 			if(errno==EEXIST){
 				printf("Errore: impossibile creare la directory chiamata '%s' perché esiste già un altro file o directory con quel nome\n", directoryname);
@@ -91,15 +106,15 @@ void createDirectory(int inode, char* directoryname, char* type, char* creator){
 		}else{
 			array_fat[next_inode]=(struct fat*)malloc(sizeof(struct fat));
 			array_fat[next_inode]->inode=inode;
-			array_fat[next_inode]->name=(char*)malloc(sizeof(char)*strlen(directoryname));
+			//array_fat[next_inode]->name=(char*)malloc(sizeof(char)*strlen(directoryname));
 			strcpy(array_fat[next_inode]->name, directoryname);
-			array_fat[next_inode]->path=(char*)malloc(sizeof(char)*strlen(current_path));
+			//array_fat[next_inode]->path=(char*)malloc(sizeof(char)*strlen(current_path));
 			strcpy(array_fat[next_inode]->path, current_path);
 			//array_fat[next_inode]->type=(char*)malloc(sizeof(char));
-			/*strcpy(array_fat[next_inode]->type, type);*/
-			array_fat[next_inode]->type=type;
+			strcpy(array_fat[next_inode]->type, type);
+			//array_fat[next_inode]->type=type;
 			array_fat[next_inode]->size=0;
-			array_fat[next_inode]->creator=(char*)malloc(sizeof(char)*strlen(creator));
+			//array_fat[next_inode]->creator=(char*)malloc(sizeof(char)*strlen(creator));
 			strcpy(array_fat[next_inode]->creator, creator);
 			if(strcmp(GENERIC_CREATOR, creator)==0){
 				array_fat[next_inode]->inode_padre=SERVER_FATHER;
@@ -175,7 +190,7 @@ void sizeUpdate(int inode){
 			array_fat[inode]->inode_padre);
 			sendToServer(elem);*/
 		}else{
-			char elem[100];
+			char elem[sizeof(struct fat)+64];
 			sprintf(elem, "%d %s %s %s %s %d %d\n", inode, array_fat[inode]->name, 
 			array_fat[inode]->path, array_fat[inode]->type, array_fat[inode]->creator, array_fat[inode]->size, 
 			array_fat[inode]->inode_padre);

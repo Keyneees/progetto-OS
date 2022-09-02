@@ -12,7 +12,8 @@
 #include <stdio.h>
 #include <pthread.h>
 
-int inode_fat;
+int inode_fat=0;
+int inode_dir=1;
 int fdfat;
 char buf[100];
 
@@ -22,7 +23,7 @@ int main(){
 	FILE* exist=fopen(FAT_FILE_NAME, "r");
 	if(exist==NULL){
 		printf("Il file non esiste\n");
-		createFile(0, FAT_FILE_NAME, FILE_TYPE, GENERIC_CREATOR);
+		createFile(0, FAT_FILE_NAME, FILE_TYPE, GENERIC_CREATOR, "/", SERVER_FATHER);
 		
 		fdfat=open(FAT_FILE_NAME, O_RDWR);
 		if(fdfat==-1) handle_error("Errore: impossibile aprire il FAT.txt\n");
@@ -31,7 +32,7 @@ int main(){
 			sprintf(buffer, "%d\n", i);
 			write(fdfat, buffer, strlen(buffer));
 		}
-		inode_fat=next_inode;
+		//inode_fat=next_inode;
 		ret=close(fdfat);
 		if(ret==-1) handle_error("Errore: impossibile chiudere il FAT.txt\n");
 		//INSERIRE FILE E DIRECTORY SUL FAT.txt
@@ -41,13 +42,13 @@ int main(){
 		insertInFatFile(row, next_inode);
 		
 		nextInode();
-		createDirectory(next_inode, FILE_SYSTEM_DIRECTORY, DIR_TYPE, GENERIC_CREATOR);
+		createDirectory(next_inode, FILE_SYSTEM_DIRECTORY, DIR_TYPE, GENERIC_CREATOR, "/", SERVER_FATHER);
 		//INSERIRE FILE E DIRECTORY SUL FAT.txt
 		sprintf(row, "%d %s %s %s %s %d %d\n", next_inode, FILE_SYSTEM_DIRECTORY, current_path, DIR_TYPE, GENERIC_CREATOR, 0, SERVER_FATHER);
 		insertInFatFile(row, next_inode);
-		
+		//inode_dir=next_inode;
 		sizeUpdate(inode_fat);
-		nextInode();
+		//nextInode();
 	}else{
 		printf("Il file esiste\n");
 		//CARICARE LA STRUTTURA CHE TIENE MEMORIA DEI FILE E DELLE DIRECTORY CREATE
@@ -55,8 +56,8 @@ int main(){
 	}
 	stampaArray();
 	nextInode();
-	
-	printf("Caricamento inode padre...");
+	printf("Array stampato\n");
+	//printf("Caricamento inode padre...");
 	sharing_father();
 	printf(" Effettuato\n");
 	printf("Server pronto all'avvio\n");
@@ -99,15 +100,18 @@ int main(){
 			char* nome=strtok(NULL, SEPARATOR);
 			char* type=strtok(NULL, SEPARATOR);
 			char* creator=strtok(NULL, SEPARATOR);
+			char* path=strtok(NULL, SEPARATOR);
+			int inode_padre=strtol(strtok(NULL, SEPARATOR), NULL, 10);
 			if(strcmp(DIR_TYPE, type)==0){
-				createDirectory(next_inode, nome, type, creator);
+				createDirectory(next_inode, nome, type, creator, path, inode_padre);
 			}else{
-				createFile(next_inode, nome, type, creator);
+				createFile(next_inode, nome, type, creator, path, inode_padre);
 			}
 			char row[100];
-			sprintf(row, "%d %s %s %s %s %d %d\n", next_inode, nome, "da_sistemare", type, creator, 0, 99999); //TROVARE IL MODO PER SOSTITUIRE current_path & 99999
+			sprintf(row, "%d %s %s %s %s %d %d\n", next_inode, nome, path, type, creator, 0, inode_padre); //TROVARE IL MODO PER SOSTITUIRE current_path & 99999
 			insertInFatFile(row, next_inode);
 			sizeUpdate(inode_fat);
+			sizeUpdate(inode_dir);
 			nextInode();
 		}else if(strcmp(elem, DELETE_CMD)==0){
 			//GESTIONE ELIMINAZIONE DELLA RIGA

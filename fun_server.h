@@ -6,3 +6,4 @@ void loadFAT();
 void updateFat(int inode, int size);
 void sharing_father();
 void stampaArray();
+void searchElement(char* name, char* size, char* type);
