@@ -23,6 +23,7 @@ void printInfo(){
 	printf("\tld -> comando per stampare gli elementi presenti nella direcoty corrente\n");
 	printf("\thelp -> comando per visualizzare i comandi eseguibili nel sistema\n");
 	printf("\texit -> comando per chiudere il sistema\n");
+	printf("\tclose -> comando per chiudere sia il sistema sia il server\n");
 }
 
 void sharing_father(){
@@ -62,5 +63,38 @@ void sendToServer(char* elem){
 	}
 	ret=close(fdfifo);
 	if(ret==-1) handle_error("Errore: impossibile chiudere la fifo di comunicazione con il server\n");
+	if(strcmp(CLOSE_CMD, elem)!=0){
+		waitResult();
+	}
 }
 
+void waitResult(){
+	int ret=mkfifo(FIFO_FOR_RES, 0666);
+	if(ret==-1) handle_error("Errore: impossibile creare la fifo per ricevere istruzioni dagli utenti\n");	
+	int fdfifo=open(FIFO_FOR_RES, O_RDONLY);
+	if(fdfifo==-1) handle_error("Errore: impossibile aprire la fifo per comunicare con gli utenti\n");
+	int bytes_read=0;
+	char res[128];
+	memset(res, 0, 128);
+	printf("In attesa del server...\n");
+	while(1){
+		ret=read(fdfifo, res+bytes_read, 100);
+		if(bytes_read==-1){
+			if(errno==EINTR){
+				continue;
+			}else{
+				handle_error("Errore: impossibile leggere il messaggio dell'utente\n");
+			}
+		}else if(ret==0){
+			break;
+		}else{
+			bytes_read+=ret;
+		}
+	}
+	//fflush(stdout);
+	printf("%s\n", res);
+	ret=close(fdfifo);
+	if(ret==-1) handle_error("Errore: impossibile chiudere il canale di comunicazione\n");
+	ret=unlink(FIFO_FOR_RES);
+	if(ret==-1) handle_error("Errore: impossibile eliminare il canale di comunicazione\n");
+}

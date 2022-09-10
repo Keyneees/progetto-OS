@@ -15,6 +15,8 @@
 //FUNZONI PER I FILE
 void createFile(int inode, char* filename, char* type, char* creator, char* path, int inode_padre){
 	int ret;
+	char res[128];
+	memset(res, 0, 128);
 	if(next_inode<MAX_INODE){
 		char* location;
 		if(strcmp(path, "/")==0){
@@ -25,13 +27,15 @@ void createFile(int inode, char* filename, char* type, char* creator, char* path
 			strcpy(location, path);
 			strcat(location, filename);
 		}
-		int create=creat(location, PERMESSI_FILE);
+		int create=open(location, O_CREAT | O_EXCL, PERMESSI_FILE);
 		free(location);
 		if(create==-1){
 			if(errno==EEXIST){
-				printf("Errore: impossibile creare il file chiamato '%s' perché esiste già un altro file o directory con quel nome\n", filename);
+				sprintf(res,"Errore: impossibile creare il file: nome già in uso");
+				printf("%s", res);
 			}else{
-				printf("Errore: impossbile creare il file\n");
+				sprintf(res, "Errore: impossbile creare il file");
+				printf("%s", res);
 			}
 		}else{
 			printf("File %s creato con successo\n", filename);
@@ -41,7 +45,7 @@ void createFile(int inode, char* filename, char* type, char* creator, char* path
 			//array_fat[next_inode]->name=(char*)malloc(sizeof(char)*strlen(filename));
 			strcpy(array_fat[next_inode]->name, filename);
 			//array_fat[next_inode]->path=(char*)malloc(sizeof(char)*strlen(creator));
-			strcpy(array_fat[next_inode]->path, current_path);
+			strcpy(array_fat[next_inode]->path, path);
 			//array_fat[next_inode]->type=(char*)malloc(sizeof(char));
 			strcpy(array_fat[next_inode]->type, type);
 			//array_fat[next_inode]->type=type;
@@ -49,18 +53,30 @@ void createFile(int inode, char* filename, char* type, char* creator, char* path
 			//array_fat[next_inode]->creator=(char*)malloc(sizeof(char)*strlen(creator));
 			strcpy(array_fat[next_inode]->creator, creator);
 			array_fat[next_inode]->inode_padre=inode_padre;
-			printf("Elemento inserito\n");
+			sprintf(res, "Elemento creato con successo");
+			printf("%s", res);
+			char row[100];
+			sprintf(row, "%d %s %s %s %s %d %d\n", next_inode, filename, path, type, creator, 0, inode_padre);
+			insertInFatFile(row, next_inode);
+			printf("Fat file aggiornato\n");
 		}
 	}else{
 		//GESTIONE IMPOSSIBLITA' DI CREARE IL FILE
-		printf("Impossibile creare il nuovo file, limite di file disponibili raggiunto\n");
-		printf("Modifica o elimina file/directory già esistenti\n");
+		sprintf(res, "Impossibile creare il nuovo file, limite di file disponibili raggiunto\nModifica o elimina file/directory già esistenti\n");
+		printf("%s", res);
 	}
-	
+	printf("Fine preparazione fat_element\n");
+	int dif=strcmp(GENERIC_CREATOR, creator);
+	if(dif){
+		printf("Messaggio mandato al server: %s\n", res);
+		sendResult(res);
+	}
 }
 
 void eraseFile(int inode){
-	char* filename=array_fat[inode]->name;
+	char* filename=(char*)malloc(sizeof(char)*(strlen(array_fat[inode]->path)+strlen(array_fat[inode]->name)+2));
+	strcpy(filename, array_fat[inode]->path);
+	strcat(filename, array_fat[inode]->name);
 	int ret=remove(filename);
 	if(ret==-1){
 		printf("Il file %s non esiste nella directory corrente\n", filename);
@@ -83,6 +99,7 @@ void eraseFile(int inode){
 
 //FUNZIONI PER LE DIRECTORY
 void createDirectory(int inode, char* directoryname, char* type, char* creator, char* path, int inode_padre){
+	char res[128];
 	if(next_inode<MAX_INODE){
 		char* location;
 		if(strcmp(path, "/")==0){
@@ -99,9 +116,11 @@ void createDirectory(int inode, char* directoryname, char* type, char* creator, 
 		free(location);
 		if(fddir==-1){
 			if(errno==EEXIST){
-				printf("Errore: impossibile creare la directory chiamata '%s' perché esiste già un altro file o directory con quel nome\n", directoryname);
+				sprintf(res,"Errore: impossibile creare la directory: nome già in uso");
+				printf("%s", res);
 			}else{
-				printf("Errore: impossbile creare la directory\n");
+				sprintf(res, "Errore: impossbile creare la directory");
+				printf("%s", res);
 			}
 		}else{
 			array_fat[next_inode]=(struct fat*)malloc(sizeof(struct fat));
@@ -109,46 +128,46 @@ void createDirectory(int inode, char* directoryname, char* type, char* creator, 
 			//array_fat[next_inode]->name=(char*)malloc(sizeof(char)*strlen(directoryname));
 			strcpy(array_fat[next_inode]->name, directoryname);
 			//array_fat[next_inode]->path=(char*)malloc(sizeof(char)*strlen(current_path));
-			strcpy(array_fat[next_inode]->path, current_path);
+			strcpy(array_fat[next_inode]->path, path);
 			//array_fat[next_inode]->type=(char*)malloc(sizeof(char));
 			strcpy(array_fat[next_inode]->type, type);
 			//array_fat[next_inode]->type=type;
 			array_fat[next_inode]->size=0;
 			//array_fat[next_inode]->creator=(char*)malloc(sizeof(char)*strlen(creator));
 			strcpy(array_fat[next_inode]->creator, creator);
-			if(strcmp(GENERIC_CREATOR, creator)==0){
-				array_fat[next_inode]->inode_padre=SERVER_FATHER;
-			}else{
-				array_fat[next_inode]->inode_padre=99999;
-			}
+			array_fat[next_inode]->inode_padre=inode_padre;
+			sprintf(res, "Elemento creato con successo");
+			printf("Elemento inserito\n");
+			char row[100];
+			sprintf(row, "%d %s %s %s %s %d %d\n", next_inode, directoryname, path, type, creator, 0, inode_padre);
+			insertInFatFile(row, next_inode);
 		}
 	}else{
 		//GESTIONE IMPOSSIBILITA' DI CREARE LA DIRECTORY
-		printf("Impossibile creare la nuova directory, limite di file disponibili raggiunto\n");
-		printf("Modifica o elimina file/directory già esistenti\n");
+		sprintf(res, "Impossibile creare la nuova directory, limite di file disponibili raggiunto\nModifica o elimina file/directory già esistenti\n");
+		printf("%s", res);
 		
+	}
+	if(strcmp(creator, GENERIC_CREATOR)!=0){
+		//sleep(3);
+		printf("Messaggio mandato al server: %s\n", res);
+		sendResult(res);
 	}
 }
 
 void eraseDirectory(int inode){
-	char* directoryname=array_fat[inode]->name;
-	int ret=rmdir(directoryname);
+	char* directoryname=(char*)malloc(sizeof(char)*(strlen(array_fat[inode]->path)+strlen(array_fat[inode]->name)+2));
+	strcpy(directoryname, array_fat[inode]->path);
+	strcat(directoryname, array_fat[inode]->name);
+	int ret=remove(directoryname);
 	if(ret==-1){
 		printf("La directory %s non esiste nella directory corrente", directoryname);
 	}else{
-		for(int i=0; i<MAX_INODE; i++){
-			if(array_fat[i]->inode_padre==inode){
-				if(strcmp(array_fat[i]->type, DIR_TYPE)==0){
-					eraseDirectory(i);
-				}else{
-					eraseFile(i);
-				}
-			}
-		}
-		free(array_fat[inode]->name);
+		removeChild(inode);
+		/*free(array_fat[inode]->name);
 		free(array_fat[inode]->path);
 		free(array_fat[inode]->type);
-		free(array_fat[inode]->creator);
+		free(array_fat[inode]->creator);*/
 		free(array_fat[inode]);
 		array_fat[inode]=NULL;
 		
@@ -197,5 +216,19 @@ void sizeUpdate(int inode){
 			insertInFatFile(elem, inode);
 		}
 		sizeUpdate(array_fat[inode]->inode_padre);
+	}
+}
+
+void removeChild(int inode){
+	for(int i=0; i<MAX_INODE; i++){
+		if(array_fat[i]!=NULL){
+			if(array_fat[i]->inode_padre==inode){
+				if(strcmp(array_fat[i]->type, DIR_TYPE)==0){
+					removeChild(i);
+				}
+				free(array_fat[inode]);
+				array_fat[inode]=NULL;
+			}
+		}
 	}
 }

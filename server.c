@@ -63,9 +63,10 @@ int main(){
 	printf("Server pronto all'avvio\n");
 	current_path=*FILE_SYSTEM_DIRECTORY+"/";
 	unlink(FIFO_FOR_FAT);
-	while(1){
+	int loop=1;
+	while(loop){
 		printf("In attesa dei comandi degli utenti...\n");
-		ret=mkfifo(FIFO_FOR_FAT, 0600);
+		ret=mkfifo(FIFO_FOR_FAT, 0666);
 		if(ret==-1) handle_error("Errore: impossibile creare la fifo per ricevere istruzioni dagli utenti\n");
 		
 		int fdfifo=open(FIFO_FOR_FAT, O_RDONLY);
@@ -107,24 +108,40 @@ int main(){
 			}else{
 				createFile(next_inode, nome, type, creator, path, inode_padre);
 			}
-			char row[100];
-			sprintf(row, "%d %s %s %s %s %d %d\n", next_inode, nome, path, type, creator, 0, inode_padre); //TROVARE IL MODO PER SOSTITUIRE current_path & 99999
-			insertInFatFile(row, next_inode);
 			sizeUpdate(inode_fat);
 			sizeUpdate(inode_dir);
 			nextInode();
 		}else if(strcmp(elem, DELETE_CMD)==0){
 			//GESTIONE ELIMINAZIONE DELLA RIGA
-			int inode=strtol(strtok(NULL, SEPARATOR), NULL, 10);
-			char elem[100];
-			sprintf(elem, "%d\n", inode);
-			insertInFatFile(elem, inode);
-			sizeUpdate(inode_fat);
-			nextInode(fdfat);
+			printf("GESTIONE ELIMINAZIONE DELLA RIGA\n");
+			char* nome=strtok(NULL, SEPARATOR);
+			char* type=strtok(NULL, SEPARATOR);
+			char* path=strtok(NULL, SEPARATOR);
+			int inode=searchElement(nome, path);
+			if(inode){
+				if(strcmp(type, DIR_TYPE)==0){
+					printf("Cancello direcotry...\n");
+					eraseDirectory(inode);
+				}else{
+					printf("Cancello file...\n");
+					eraseFile(inode);
+				}
+				sendResult("Cancellazione avvenuta con successo\n");
+				char in[10];
+				sprintf(in, "%d\n", inode);
+				insertInFatFile(in, inode);
+				sizeUpdate(inode_fat);
+				nextInode(fdfat);
+			}else{
+				sendResult("File o directory non esiste\n");
+			}
 		}else if(strcmp(elem, UPDATE_CMD)==0){
 			//GESTIONE AGGIORNAMENTO DIMESIONE DI UNA RIGA DEL FILE FAT.txt
 			int inode=strtol(strtok(NULL, SEPARATOR), NULL, 10);
 			insertInFatFile(buf, inode);
+		}else if(strcmp(elem, CLOSE_CMD)==0){
+			printf("Chiusura in corso...\n");
+			loop=0;
 		}else{
 			//GESTIONE INSERIMENTO DELLA RIGA
 			int inode=strtol(elem, NULL, 10);
@@ -132,6 +149,8 @@ int main(){
 			sizeUpdate(inode_fat);
 			nextInode(fdfat);
 		}
+		memset(buf, 0, 100);
+		stampaArray();
 	}
 	ret=shm_unlink(SHMEM_FOR_INFO);
 	if(ret==-1) handle_error("Errore: impossibile fare l'unlink della memoria condivisa\n");

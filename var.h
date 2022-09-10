@@ -9,12 +9,14 @@
 #define FILE_TYPE "F"
 #define DIR_TYPE "D"
 
-#define FIFO_FOR_FAT "sharedfifo"
+#define FIFO_FOR_FAT "infofat"
+#define FIFO_FOR_RES "inforesult"
 #define SHMEM_FOR_INFO "/infomem"
 
 #define CREAT_CMD "creat"
 #define DELETE_CMD "delete"
 #define UPDATE_CMD "update"
+#define CLOSE_CMD "close"
 #define SEPARATOR " \n"
 
 #define PERMESSI_FILE 0666

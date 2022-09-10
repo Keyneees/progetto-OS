@@ -21,3 +21,4 @@ void listDirectory();
 //FUNZIONI EXTRA
 void addElement(int fd, char* elem, int size_elem);
 void sizeUpdate(int inode);
+void removeChild(int inode);

@@ -150,20 +150,55 @@ void stampaArray(){
 	}
 }
 
-void searchElement(char* name, char* path, char* type){
+int searchElement(char* name, char* path){
+	printf("Ricerca dell'elemento...\n");
 	int trovato=0;
 	int inode;
+	printf("Nome: %s\nPath: %s\n", name, path);
 	for(int i=0; i<MAX_INODE && !trovato; i++){
-		if(strcmp(array_fat[i]->name, name)==0 && strcmp(array_fat[i]->path, path)==0){
-			inode=array_fat[i]->inode;
-			trovato=1;
+		if(array_fat[i]!=NULL){
+			if(strcmp(array_fat[i]->name, name)==0 && strcmp(array_fat[i]->path, path)==0){
+				printf("Elemento trovato\n");
+				inode=i;
+				trovato=1;
+			}else{
+				printf("%d: Elemento con nome o percorso diverso\n", i);
+			}
+		}else{
+			printf("%d: Elemento assente\n", i);
 		}
 	}
 	if(trovato){
-		if(strcmp(type, DIR_TYPE)==0){
-			eraseDirectory(inode);
+		printf("Elemento trovato\n");
+		return inode;
+	}else{
+		printf("Elemento non trovato\n");
+		return 0;
+	}
+}
+
+void sendResult(char* res){
+	printf("Preparazione invio risultato all'utente\n");
+	int fdfifo=open(FIFO_FOR_RES, O_WRONLY);
+	if(fdfifo==-1){printf("errno: %d\n", errno); handle_error("Errore: impossibile aprire la fifo per comunicare con gli utenti\n");}
+	int send_bytes=0;
+	int size_elem=strlen(res);
+	int ret=0;
+	printf("Inviando %s all'utente...\n", res);
+	while(send_bytes<size_elem){
+		ret=write(fdfifo, res+send_bytes, size_elem-send_bytes);
+		printf("%d\n", ret);
+		if(ret==-1){
+			if(errno==EINTR){
+				continue;
+			}else{
+				handle_error("Errore: impossibile mandare il messaggio all'utente\n");
+			}
 		}else{
-			eraseFile(inode);
+			send_bytes+=ret;
 		}
 	}
+	printf("%s\n", res);
+	ret=close(fdfifo);
+	if(ret==-1) handle_error("Errore: impossibile chiudere il canale di comunicazione\n");
 }
