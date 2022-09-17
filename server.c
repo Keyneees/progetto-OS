@@ -18,6 +18,7 @@ int fdfat;
 char buf[100];
 
 int main(){
+	array_fat=(struct fat**)malloc(sizeof(struct fat*)*MAX_INODE);
 	int ret;
 	current_path="/";
 	FILE* exist=fopen(FAT_FILE_NAME, "r");

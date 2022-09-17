@@ -12,6 +12,7 @@ int inode_padre;
 char user[30];
 
 int main(){
+	array_fat=(struct fat**)malloc(sizeof(struct fat*));
 	printf("%sInserire il nome per il login: ", CMD_LINE);
 	scanf("%s", user);
 	while(strcmp(GENERIC_CREATOR, user)==0){
@@ -28,6 +29,7 @@ int main(){
 	char elem[100];
 	int e=0;
 	sharing_father();
+	stampaArray();
 	inode_padre=fat_padre->inode;
 	printf("Info padre:\n");
 	printf("Puntantore: %p\n", fat_padre);

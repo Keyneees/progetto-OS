@@ -15,3 +15,4 @@ void printInfo();
 void sharing_father();
 void sendToServer(char* elem);
 void waitResult();
+void stampaArray();

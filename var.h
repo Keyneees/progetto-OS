@@ -36,6 +36,6 @@ struct fat{
 	char creator[64];
 };
 
-struct fat* array_fat[MAX_INODE];
+struct fat** array_fat;
 struct fat* fat_padre;
 

@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/shm.h>
+#include <sys/ipc.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
@@ -27,18 +29,42 @@ void printInfo(){
 }
 
 void sharing_father(){
-	fat_padre=(struct fat*)malloc(sizeof(struct fat));
-	/*fat_padre->name=(char*)malloc(sizeof(char)*64);
-	fat_padre->path=(char*)malloc(sizeof(char)*64);
-	fat_padre->type=(char*)malloc(sizeof(char)*64);
-	fat_padre->creator=(char*)malloc(sizeof(char)*64);*/
+	//RICEZIONE DI UN SINGOLO ELEMENTO
+	/*fat_padre=(struct fat*)malloc(sizeof(struct fat));
 	int fd=shm_open(SHMEM_FOR_INFO, O_RDONLY, 0666);
 	if(fd==-1) handle_error("Errore: impossibile aprire la memoria condivisa\n");
 	int size=sizeof(struct fat)+sizeof(char)*256;
 	fat_padre=(struct fat*)mmap(0, size, PROT_READ, MAP_SHARED, fd, 0);
 	if(fat_padre==MAP_FAILED) handle_error("Errore: impossibile recuperare dati dal memoria condivisa\n");
 	int ret=close(fd);
-	if(ret==-1) handle_error("Errore: impossibile chiudere la memoria condivisa\n");
+	if(ret==-1) handle_error("Errore: impossibile chiudere la memoria condivisa\n");*/
+	
+	//RICEZIONE DELL'ARRAY DI ELEMENTI
+	int size=sizeof(struct fat)*MAX_INODE;
+	int id=shmget(12345, size, IPC_EXCL | 0666);
+	if(id==-1) handle_error("Error shmid\n");
+	struct fat* shmem;
+	shmem=(struct fat*)shmat(id, 0, 0);
+	printf("Shmem:\n");
+	for(int i=0; i<MAX_INODE; i++){
+			printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s, inode_padre %d\n", shmem[i].inode, shmem[i].size, shmem[i].creator,
+			shmem[i].name, shmem[i].path, shmem[i].type, shmem[i].inode_padre);
+			if(shmem[i].inode==INODE_LIMIT){
+				array_fat[i]=NULL;
+			}else{
+				array_fat[i]=(struct fat*)malloc(sizeof(struct fat));
+				array_fat[i]->inode=shmem[i].inode;
+				array_fat[i]->size=shmem[i].size;
+				array_fat[i]->inode_padre=shmem[i].inode_padre;
+				strcpy(array_fat[i]->name, shmem[i].name);
+				strcpy(array_fat[i]->path, shmem[i].path);
+				strcpy(array_fat[i]->type, shmem[i].type);
+				strcpy(array_fat[i]->creator, shmem[i].creator);
+			}
+	}
+	shmdt((void *)shmem);
+	shmctl(id, IPC_RMID, NULL);
+	printf("Fine shmem\n");
 	
 }
 
@@ -97,4 +123,17 @@ void waitResult(){
 	if(ret==-1) handle_error("Errore: impossibile chiudere il canale di comunicazione\n");
 	ret=unlink(FIFO_FOR_RES);
 	if(ret==-1) handle_error("Errore: impossibile eliminare il canale di comunicazione\n");
+}
+
+void stampaArray(){
+	printf("Stampa array:\n");
+	for(int i=0; i<MAX_INODE; i++){
+		if(array_fat[i]!=NULL){
+			printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s\n", array_fat[i]->inode, array_fat[i]->size, array_fat[i]->creator,
+				 array_fat[i]->name, array_fat[i]->path, array_fat[i]->type);
+		}else{
+			printf("Inode %d, NULL\n", i);
+		}
+	}
+	printf("Stampato\n");
 }

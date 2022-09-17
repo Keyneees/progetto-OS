@@ -5,6 +5,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/shm.h>
+#include <sys/ipc.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -111,12 +113,8 @@ void loadFAT(){
 }
 
 void sharing_father(){
-	int size=sizeof(struct fat)+sizeof(char)*192;
-	/*struct fat* shared=(struct fat*)malloc(sizeof(struct fat));
-	shared->name=(char*)malloc(sizeof(char)*64);
-	shared->path=(char*)malloc(sizeof(char)*64);
-	shared->type=(char*)malloc(sizeof(char)*64);
-	shared->creator=(char*)malloc(sizeof(char)*64);*/
+	//CONDIVISIONE DI UN ELEMENTO SINGOLO
+	/*int size=sizeof(struct fat)+sizeof(char)*256;
 	int fd=shm_open(SHMEM_FOR_INFO, O_CREAT|O_RDWR, 0666);
 	if(fd==-1) handle_error("Errore: impossibile creare la zona di memoria condivisa\n");
 	int ret=ftruncate(fd, size);
@@ -135,7 +133,42 @@ void sharing_father(){
 	printf("Type padre %s\n", shared->type);
 	printf("Creator padre %s\n", shared->creator);
 	ret=close(fd);
-	if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor della memoria condivisa");	
+	if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor della memoria condivisa");	*/
+	
+	
+	//CONDIVISIONE DELL'ARRAY DI ELEMENTI
+	int size=sizeof(struct fat)*MAX_INODE;
+	int id=shmget(12345, size, IPC_CREAT | IPC_EXCL | 0666);
+	if(id==-1) handle_error("Error shmid\n");
+	struct fat* shmem;
+	shmem=(struct fat*)shmat(id, 0, 0);
+	for(int i=0; i<MAX_INODE; i++){
+		//shmem[i]=(struct fat*)malloc(sizeof(struct fat));
+		if(array_fat[i]!=NULL){
+			shmem[i].inode=array_fat[i]->inode;
+			strcpy(shmem[i].name, array_fat[i]->name);
+			strcpy(shmem[i].path, array_fat[i]->path);
+			strcpy(shmem[i].creator, array_fat[i]->creator);
+			strcpy(shmem[i].type, array_fat[i]->type);
+			shmem[i].size=array_fat[i]->size;
+			shmem[i].inode_padre=array_fat[i]->inode_padre;
+		}else{
+			shmem[i].inode=INODE_LIMIT;
+			strcpy(shmem[i].name, "");
+			strcpy(shmem[i].path, "");
+			strcpy(shmem[i].creator, "");
+			strcpy(shmem[i].type, "");
+			shmem[i].size=0;
+			shmem[i].inode_padre=0;
+		}
+	}
+	printf("Shmem:\n");
+	for(int i=0; i<MAX_INODE; i++){
+			printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s, inode_padre %d\n", shmem[i].inode, shmem[i].size, shmem[i].creator,
+			shmem[i].name, shmem[i].path, shmem[i].type, shmem[i].inode_padre);
+	}
+	shmdt((void *)shmem);
+	printf("Fine shmem\n");
 }
 
 void stampaArray(){
