@@ -41,15 +41,16 @@ void sharing_father(){
 	
 	//RICEZIONE DELL'ARRAY DI ELEMENTI
 	int size=sizeof(struct fat)*MAX_INODE;
-	int id=shmget(12345, size, IPC_EXCL | 0666);
+	int id=shmget(12345, size, IPC_CREAT | 0666);
 	if(id==-1) handle_error("Error shmid\n");
 	struct fat* shmem;
 	shmem=(struct fat*)shmat(id, 0, 0);
 	printf("Shmem:\n");
 	for(int i=0; i<MAX_INODE; i++){
-			printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s, inode_padre %d\n", shmem[i].inode, shmem[i].size, shmem[i].creator,
-			shmem[i].name, shmem[i].path, shmem[i].type, shmem[i].inode_padre);
+			//printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s, inode_padre %d\n", shmem[i].inode, shmem[i].size, shmem[i].creator,
+			//shmem[i].name, shmem[i].path, shmem[i].type, shmem[i].inode_padre);
 			if(shmem[i].inode==INODE_LIMIT){
+				//array_fat[i]=(struct fat*)malloc(sizeof(struct fat));
 				array_fat[i]=NULL;
 			}else{
 				array_fat[i]=(struct fat*)malloc(sizeof(struct fat));
@@ -128,12 +129,27 @@ void waitResult(){
 void stampaArray(){
 	printf("Stampa array:\n");
 	for(int i=0; i<MAX_INODE; i++){
+		//printf("%d NULL? %d\n", i, array_fat[i]==NULL);
 		if(array_fat[i]!=NULL){
-			printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s\n", array_fat[i]->inode, array_fat[i]->size, array_fat[i]->creator,
-				 array_fat[i]->name, array_fat[i]->path, array_fat[i]->type);
+			printf("Inode %d, size %d, creator %s, nome %s,\npercorso %s, tipo %s, inode padre %d\n\n", array_fat[i]->inode, array_fat[i]->size, array_fat[i]->creator, array_fat[i]->name, array_fat[i]->path, array_fat[i]->type, array_fat[i]->inode_padre);
 		}else{
-			printf("Inode %d, NULL\n", i);
+			//printf("Inode %d, NULL\n", i);
 		}
 	}
 	printf("Stampato\n");
+}
+
+void currentPath(){
+	if(strcmp(fat_padre->path, "/")==0){
+		printf("Percorso trovato: /\n");
+		current_path=(char*)malloc(sizeof(char)*(strlen(fat_padre->name)+3));
+		current_path=strcpy(current_path, fat_padre->name);
+		current_path=strcat(current_path, "/");
+	}else{
+		printf("Percorso non basilare\n");
+		current_path=(char*)malloc(sizeof(char)*(strlen(fat_padre->path)+strlen(fat_padre->name)+3));
+		current_path=strcpy(current_path, fat_padre->path);
+		current_path=strcat(current_path, fat_padre->name);
+		current_path=strcat(current_path, "/");
+	}
 }

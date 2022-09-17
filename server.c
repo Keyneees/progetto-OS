@@ -11,14 +11,34 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 int inode_fat=0;
 int inode_dir=1;
 int fdfat;
 char buf[100];
+sem_t* server;
+sem_t* shmem;
+sem_t* main_s;
 
 int main(){
 	array_fat=(struct fat**)malloc(sizeof(struct fat*)*MAX_INODE);
+	
+	sem_unlink(SEM_SERVER);
+	server=NULL;
+	server=sem_open(SEM_SERVER, O_CREAT | O_EXCL, 0666, 1);
+	if(server==SEM_FAILED) handle_error("Errore: impossibile avviare sem_server\n");
+	
+	sem_unlink(SEM_MAIN);
+	main_s=NULL;
+	main_s=sem_open(SEM_MAIN, O_CREAT | O_EXCL, 0666, 0);
+	if(main_s==SEM_FAILED) handle_error("Errore: impossibile avviare sem_main\n");
+	
+	sem_unlink(SEM_SHMEM);
+	shmem=NULL;
+	shmem=sem_open(SEM_SHMEM, O_CREAT | O_EXCL, 0666, 1);
+	if(shmem==SEM_FAILED) handle_error("Errore: impossibile avviare sem_shmem\n");
+	
 	int ret;
 	current_path="/";
 	FILE* exist=fopen(FAT_FILE_NAME, "r");
@@ -128,9 +148,6 @@ int main(){
 					eraseFile(inode);
 				}
 				sendResult("Cancellazione avvenuta con successo\n");
-				char in[10];
-				sprintf(in, "%d\n", inode);
-				insertInFatFile(in, inode);
 				sizeUpdate(inode_fat);
 				nextInode(fdfat);
 			}else{
@@ -150,9 +167,32 @@ int main(){
 			sizeUpdate(inode_fat);
 			nextInode(fdfat);
 		}
+		
+		ret=sem_wait(server);
+		if(ret==-1) handle_error("Errore: sem_wait server\n");
+		ret=sem_wait(shmem);
+		if(ret==-1) handle_error("Errore: sem_wait shmem\n");
+		sharing_father();
+		ret=sem_post(shmem);
+		if(ret==-1) handle_error("Errore: sem_post shmem\n");
+		ret=sem_post(main_s);
+		if(ret==-1) handle_error("Errore: sem_post main	\n");
+		
 		memset(buf, 0, 100);
 		stampaArray();
 	}
-	ret=shm_unlink(SHMEM_FOR_INFO);
-	if(ret==-1) handle_error("Errore: impossibile fare l'unlink della memoria condivisa\n");
+	
+	ret=sem_close(server);
+	if(ret==-1) handle_error("Errore: sem_close server\n");
+	ret=sem_close(shmem);
+	if(ret==-1) handle_error("Errore: sem_close shmem\n");
+	ret=sem_close(main_s);
+	if(ret==-1) handle_error("Errore: sem_close main\n");
+	
+	ret=sem_destroy(server);
+	if(ret==-1) handle_error("Errore: sem_destroy server\n");
+	ret=sem_destroy(shmem);
+	if(ret==-1) handle_error("Errore: sem_destroy shmem\n");
+	ret=sem_destroy(main_s);
+	if(ret==-1) handle_error("Errore: sem_destroy main\n");	
 }

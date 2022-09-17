@@ -138,7 +138,7 @@ void sharing_father(){
 	
 	//CONDIVISIONE DELL'ARRAY DI ELEMENTI
 	int size=sizeof(struct fat)*MAX_INODE;
-	int id=shmget(12345, size, IPC_CREAT | IPC_EXCL | 0666);
+	int id=shmget(12345, size, IPC_CREAT | 0666);
 	if(id==-1) handle_error("Error shmid\n");
 	struct fat* shmem;
 	shmem=(struct fat*)shmat(id, 0, 0);
@@ -162,11 +162,11 @@ void sharing_father(){
 			shmem[i].inode_padre=0;
 		}
 	}
-	printf("Shmem:\n");
+	/*printf("Shmem:\n");
 	for(int i=0; i<MAX_INODE; i++){
 			printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s, inode_padre %d\n", shmem[i].inode, shmem[i].size, shmem[i].creator,
 			shmem[i].name, shmem[i].path, shmem[i].type, shmem[i].inode_padre);
-	}
+	}*/
 	shmdt((void *)shmem);
 	printf("Fine shmem\n");
 }
@@ -175,8 +175,7 @@ void stampaArray(){
 	printf("Stampa array:\n");
 	for(int i=0; i<MAX_INODE; i++){
 		if(array_fat[i]!=NULL){
-			printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s\n", array_fat[i]->inode, array_fat[i]->size, array_fat[i]->creator,
-				 array_fat[i]->name, array_fat[i]->path, array_fat[i]->type);
+			printf("Inode %d, size %d, creator %s, nome %s,\npercorso %s, tipo %s, inode padre %d\n\n", array_fat[i]->inode, array_fat[i]->size, array_fat[i]->creator, array_fat[i]->name, array_fat[i]->path, array_fat[i]->type, array_fat[i]->inode_padre);
 		}else{
 			//printf("Inode %d, NULL\n", i);
 		}

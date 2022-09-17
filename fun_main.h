@@ -10,9 +10,11 @@
 #define LIST_DIRECTORY_CMD "ld"
 #define HELP_CMD "help"
 #define EXIT_CMD "exit"
+#define MOVE_FATHER ".."
 
 void printInfo();
 void sharing_father();
 void sendToServer(char* elem);
 void waitResult();
 void stampaArray();
+void currentPath();

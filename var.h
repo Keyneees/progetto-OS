@@ -23,6 +23,10 @@
 #define PERMESSI_DIRECTORY 0777
 #define INODE_LIMIT 999
 
+#define SEM_SERVER "/server"
+#define SEM_MAIN "/main"
+#define SEM_SHMEM "/shmem"
+
 int next_inode;
 char* current_path;
 

@@ -93,6 +93,9 @@ void eraseFile(int inode){
 		sprintf(elem, "%s %d\n", DELETE_CMD, inode);
 		printf("Stringa: %s\n", elem);
 		sendToServer(elem);*/
+		char in[10];
+		sprintf(in, "%d\n", inode);
+		insertInFatFile(in, inode);
 	}
 	
 }
@@ -156,14 +159,16 @@ void createDirectory(int inode, char* directoryname, char* type, char* creator, 
 }
 
 void eraseDirectory(int inode){
-	char* directoryname=(char*)malloc(sizeof(char)*(strlen(array_fat[inode]->path)+strlen(array_fat[inode]->name)+2));
-	strcpy(directoryname, array_fat[inode]->path);
-	strcat(directoryname, array_fat[inode]->name);
-	int ret=remove(directoryname);
+	removeChild(inode);
+	char* filename=(char*)malloc(sizeof(char)*(strlen(array_fat[inode]->path)+strlen(array_fat[inode]->name)+2));
+	strcpy(filename, array_fat[inode]->path);
+	strcat(filename, array_fat[inode]->name);
+	int ret=remove(filename);
+	printf("errno %d\n", errno);
 	if(ret==-1){
-		printf("La directory %s non esiste nella directory corrente", directoryname);
+		printf("La directory %s non esiste nella directory corrente\n", filename);
 	}else{
-		removeChild(inode);
+		
 		/*free(array_fat[inode]->name);
 		free(array_fat[inode]->path);
 		free(array_fat[inode]->type);
@@ -176,6 +181,9 @@ void eraseDirectory(int inode){
 		sprintf(elem, "%s %d\n", DELETE_CMD, inode);
 		printf("Stringa: %s\n", elem);
 		sendToServer(elem);*/
+		char in[10];
+		sprintf(in, "%d\n", inode);
+		insertInFatFile(in, inode);
 	}
 }
 
@@ -225,9 +233,12 @@ void removeChild(int inode){
 			if(array_fat[i]->inode_padre==inode){
 				if(strcmp(array_fat[i]->type, DIR_TYPE)==0){
 					removeChild(i);
+					eraseDirectory(i);
+				}else{
+					eraseFile(i);
 				}
-				free(array_fat[inode]);
-				array_fat[inode]=NULL;
+				//free(array_fat[inode]);
+				//array_fat[inode]=NULL;
 			}
 		}
 	}
