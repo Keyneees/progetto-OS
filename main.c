@@ -56,7 +56,7 @@ int main(){
 	int e=0;
 	int ret;
 	sharing_father();
-	stampaArray();
+	//stampaArray();
 	/*inode_padre=fat_padre->inode;
 	printf("Info padre:\n");
 	printf("Puntantore: %p\n", fat_padre);
@@ -94,7 +94,7 @@ int main(){
 	while(!e){
 		printf("%s", CMD_LINE);
 		scanf("%s", cmd);
-		printf("Comando inserito: %s\n", cmd);
+		//printf("Comando inserito: %s\n", cmd);
 		if(strcmp(CREATE_FILE_CMD, cmd)==0){//GESTIRE IL PERCORSO E INODE PADRE
 			printf("%sInserire il nome del file da creare: ", CMD_LINE);
 			scanf("%s", info);
@@ -110,11 +110,144 @@ int main(){
 			sendToServer(elem);
 			wait_server=1;
 		}else if(strcmp(WRITE_FILE_CMD, cmd)==0){
-			printf("Write file digitato\n");
+			//printf("Write file digitato\n");
+			printf("%sInserire il nome del file in cui scrivere: ", CMD_LINE);
+			scanf("%s", info);
+			int inode=searchElement(info, current_path);
+			if(inode==0){
+				printf("Errore: il file cercato non è presente nella directory corrente\n");
+			}else{
+				char* filename=(char*)malloc(sizeof(char)*(strlen(current_path)+strlen(info)+2));
+				strcpy(filename, current_path);
+				strcat(filename, info);
+				printf("%s\n", filename);
+				int fd=open(filename, O_RDWR);
+				if(fd==-1) handle_error("Errore: impossibile aprire il file in scrittura\n");
+				printf("Apertura del file in corso...\n");
+				
+				printf("%sInserire da quale posizione si vuole iniziare la scrittura del file (digitare 0 se si vuole leggere dall'inizio):", CMD_LINE);
+				int position;
+				scanf("%d", &position);
+				printf("position %d\n", position);
+				while(position<0){
+					printf("Errore: impossibile inserire un valore negativo\n");
+					printf("%sInserire da quale posizione si vuole iniziare la scrittura del file (digitare 0 se si vuole leggere dall'inizio):", CMD_LINE);
+					scanf("%d", &position);
+				}
+				if(position!=0){
+					ret=lseek(fd, position, SEEK_SET);
+					if(ret==-1){
+						printf("Errore: impossibile spostare la posizione del file\n");
+					}
+				}
+				
+				char old_msg[1024];
+				ret=1;
+				printf("Contenuto del file '%s':\n", info);
+				while(ret!=0 && ret!=-1){
+					ret=read(fd, old_msg, 1024);
+					printf("elementi letti: %d\n", ret); 
+					//printf("errno %d\n", errno);
+					
+				}
+				if(ret==-1){
+					printf("Errore: impossibile leggere il contenuto del file\n");
+				}else{
+					printf("%s", old_msg);
+				}
+				ret=close(fd);
+				if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor del file aperto in scrittura\n");
+				
+				fd=open(filename, O_WRONLY);
+				if(fd==-1) handle_error("Errore: impossibile aprire il file in scrittura\n");
+				ret=lseek(fd, position, SEEK_SET);
+				if(ret==-1) printf("Errore: impossibile spostare la posizione del file\n");
+				ret=close(fd);
+				if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor del file aperto in scrittura\n");
+				
+				fd=open(filename, O_RDWR);
+				if(fd==-1) handle_error("Errore: impossibile aprire il file in scrittura\n");
+				ret=lseek(fd, position, SEEK_SET);
+				if(ret==-1) printf("Errore: impossibile spostare la posizione del file\n");
+				printf("%sScrivere il contenuto da inserire nel file:\n", CMD_LINE);
+				char msg[1024];
+				getchar();
+				fgets(msg, 1024, stdin);
+				int wf=write(fd, msg, strlen(msg));
+				printf("Scritto lunghezza: %d\nInserito lunghezzza: %ld\n", wf, strlen(msg));
+				if(wf==-1){
+					printf("Errore: impossibile scrivere nel file\n");
+				}else{
+					printf("Scrittura avvenuta con successo\n");
+				}
+				wf=write(fd, old_msg, strlen(old_msg));
+				printf("Scritto lunghezza: %d\nInserito lunghezzza: %ld\n", wf, strlen(msg));
+				if(wf==-1){
+					printf("Errore: impossibile scrivere nel file\n");
+				}else{
+					printf("Scrittura avvenuta con successo\n");
+				}
+				ret=close(fd);
+				if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor del file aperto in scrittura\n");
+				memset(msg, 0, 1024);
+				memset(old_msg, 0, 1024);
+				fflush(stdin);
+			}
 		}else if(strcmp(READ_FILE_CMD, cmd)==0){
-			printf("Read file digitato\n");
+			//printf("Read file digitato\n");
+			printf("%sInserire il nome del file in cui scrivere: ", CMD_LINE);
+			scanf("%s", info);
+			int inode=searchElement(info, current_path);
+			if(inode==0){
+				printf("Errore: il file cercato non è presente nella directory corrente\n");
+			}else{
+				char* filename=(char*)malloc(sizeof(char)*(strlen(current_path)+strlen(info)+2));
+				strcpy(filename, current_path);
+				strcat(filename, info);
+				printf("%s\n", filename);
+				int fd=open(filename, O_RDWR);
+				if(fd==-1) handle_error("Errore: impossibile aprire il file in lettura\n");
+				printf("Apertura del file in corso...\n");
+				
+				printf("%sInserire da quale posizione si vuole iniziare la lettura del file (digitare 0 se si vuole leggere dall'inizio):", CMD_LINE);
+				int position;
+				scanf("%d", &position);
+				printf("position %d\n", position);
+				while(position<0){
+					printf("Errore: impossibile inserire un valore negativo\n");
+					printf("%sInserire da quale posizione si vuole iniziare la lettura del file (digitare 0 se si vuole leggere dall'inizio):", CMD_LINE);
+					scanf("%d", &position);
+				}
+				if(position!=0){
+					ret=lseek(fd, position, SEEK_SET);
+					if(ret==-1){
+						printf("Errore: impossibile spostare la posizione del file\n");
+					}
+				}
+				
+				char msg[1024];
+				ret=1;
+				printf("Contenuto del file '%s':\n", info);
+				while(ret!=0 && ret!=-1){
+					ret=read(fd, msg, 1024);
+					printf("elementi letti: %d\n", ret); 
+					//printf("errno %d\n", errno);
+					
+				}
+				if(ret==-1){
+					printf("Errore: impossibile leggere il contenuto del file\n");
+				}else{
+					printf("%s", msg);
+				}
+				printf("\n");
+				ret=close(fd);
+				if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor del file aperto in lettura\n");
+				memset(msg, 0, 1024);
+			}
 		}else if(strcmp(SEEK_FILE_CMD, cmd)==0){
-			printf("Seek file digitato\n");
+			//printf("Seek file digitato\n");
+			printf("Prima di eseguire la lettura o la scrittura di un file è possibile spostare la posizione corrente del file stesso, in modo tale che tali operazioni possano avvenire nel punto desiderato\n");
+			printf("NB: se non si vuole specificare il punto in cui iniziare a leggere o scrivere un file, le operazioni saranno eseguite dall'inizio del file\n");
 		}else if(strcmp(CREATE_DIRECTORY_CMD, cmd)==0){//GESTIRE IL PERCORSO E INODE PADRE
 			printf("%sInserire il nome della directory da creare: ", CMD_LINE);
 			scanf("%s", info);
@@ -136,7 +269,7 @@ int main(){
 			}
 			wait_server=1;
 		}else if(strcmp(CHANGE_DIRECTORY_CMD, cmd)==0){
-			printf("Change directory digitato\n");
+			//printf("Change directory digitato\n");
 			printf("%sInserire il nome della directory in cui spostarsi: ", CMD_LINE);
 			scanf("%s", info);
 			if(strcmp(MOVE_FATHER, info)==0){
@@ -179,7 +312,7 @@ int main(){
 				}
 			}
 		}else if(strcmp(LIST_DIRECTORY_CMD, cmd)==0){
-			printf("List directory digitato\n");
+			//printf("List directory digitato\n");
 			printf("Directory corrente: %s%s/\n", fat_padre->path, fat_padre->name);
 			printf("Nome\tTipo\n");
 			for(int i=0; i<MAX_INODE; i++){

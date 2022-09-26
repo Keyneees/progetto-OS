@@ -160,13 +160,13 @@ int main(){
 		}else if(strcmp(elem, CLOSE_CMD)==0){
 			printf("Chiusura in corso...\n");
 			loop=0;
-		}else{
+		}/*else{
 			//GESTIONE INSERIMENTO DELLA RIGA
 			int inode=strtol(elem, NULL, 10);
 			insertInFatFile(buf, inode);
 			sizeUpdate(inode_fat);
 			nextInode(fdfat);
-		}
+		}*/
 		
 		ret=sem_wait(server);
 		if(ret==-1) handle_error("Errore: sem_wait server\n");

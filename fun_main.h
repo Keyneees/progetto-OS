@@ -18,3 +18,4 @@ void sendToServer(char* elem);
 void waitResult();
 void stampaArray();
 void currentPath();
+int searchElement(char* name, char* path);

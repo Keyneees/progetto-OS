@@ -45,7 +45,7 @@ void sharing_father(){
 	if(id==-1) handle_error("Error shmid\n");
 	struct fat* shmem;
 	shmem=(struct fat*)shmat(id, 0, 0);
-	printf("Shmem:\n");
+	//printf("Shmem:\n");
 	for(int i=0; i<MAX_INODE; i++){
 			//printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s, inode_padre %d\n", shmem[i].inode, shmem[i].size, shmem[i].creator,
 			//shmem[i].name, shmem[i].path, shmem[i].type, shmem[i].inode_padre);
@@ -64,8 +64,8 @@ void sharing_father(){
 			}
 	}
 	shmdt((void *)shmem);
-	shmctl(id, IPC_RMID, NULL);
-	printf("Fine shmem\n");
+	//shmctl(id, IPC_RMID, NULL);
+	//printf("Fine shmem\n");
 	
 }
 
@@ -151,5 +151,32 @@ void currentPath(){
 		current_path=strcpy(current_path, fat_padre->path);
 		current_path=strcat(current_path, fat_padre->name);
 		current_path=strcat(current_path, "/");
+	}
+}
+
+int searchElement(char* name, char* path){
+	printf("Ricerca dell'elemento...\n");
+	int trovato=0;
+	int inode;
+	printf("Nome: %s\nPath: %s\n", name, path);
+	for(int i=0; i<MAX_INODE && !trovato; i++){
+		if(array_fat[i]!=NULL){
+			if(strcmp(array_fat[i]->name, name)==0 && strcmp(array_fat[i]->path, path)==0){
+				printf("Elemento trovato\n");
+				inode=i;
+				trovato=1;
+			}else{
+				printf("%d: Elemento con nome o percorso diverso\n", i);
+			}
+		}else{
+			printf("%d: Elemento assente\n", i);
+		}
+	}
+	if(trovato){
+		printf("Elemento trovato\n");
+		return inode;
+	}else{
+		printf("Elemento non trovato\n");
+		return 0;
 	}
 }
