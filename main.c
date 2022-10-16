@@ -1,6 +1,5 @@
-#include "fun.h"
-#include "var.h"
 #include "fun_main.h"
+#include "var.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,13 +7,9 @@
 #include <unistd.h>
 #include <semaphore.h>
 #include <errno.h>
+#include <fcntl.h>
 
-char* current_path;
-int inode_padre;
-char user[30];
-sem_t* server;
-sem_t* shmem;
-sem_t* main_s;
+//char* current_path;
 
 int main(){
 	array_fat=(struct fat**)malloc(sizeof(struct fat*));
@@ -49,6 +44,7 @@ int main(){
 	printf("Benvenuto %s nel sistema FAT_OS\n", user);
 	/**/
 	printInfo();
+	printInfoMD();
 	
 	char cmd[50];
 	char info[50];
@@ -92,16 +88,20 @@ int main(){
 	currentPath();
 	int wait_server=0;
 	while(!e){
+		//fflush(stdin);
 		printf("%s", CMD_LINE);
 		scanf("%s", cmd);
 		//printf("Comando inserito: %s\n", cmd);
 		if(strcmp(CREATE_FILE_CMD, cmd)==0){//GESTIRE IL PERCORSO E INODE PADRE
 			printf("%sInserire il nome del file da creare: ", CMD_LINE);
 			scanf("%s", info);
+			fflush(stdin);
+			printf("%s\n", info);
 			sprintf(elem, "%s %s %s %s %s %d", CREAT_CMD, info, FILE_TYPE, user, current_path, fat_padre->inode);
 			printf("Stringa mandata %s\n", elem);
 			sendToServer(elem);
 			wait_server=1;
+			//fflush(stdin);
 		}else if(strcmp(ERASE_FILE_CMD, cmd)==0){//GESTIRE LA POSZIONE
 			printf("%sInserire il nome del file da eliminare: ", CMD_LINE);
 			scanf("%s", info);
@@ -109,10 +109,12 @@ int main(){
 			printf("%s\n", elem);
 			sendToServer(elem);
 			wait_server=1;
+			//fflush(stdin);
 		}else if(strcmp(WRITE_FILE_CMD, cmd)==0){
 			//printf("Write file digitato\n");
 			printf("%sInserire il nome del file in cui scrivere: ", CMD_LINE);
 			scanf("%s", info);
+			//fflush(stdin);
 			int inode=searchElement(info, current_path);
 			if(inode==0){
 				printf("Errore: il file cercato non è presente nella directory corrente\n");
@@ -125,14 +127,16 @@ int main(){
 				if(fd==-1) handle_error("Errore: impossibile aprire il file in scrittura\n");
 				printf("Apertura del file in corso...\n");
 				
-				printf("%sInserire da quale posizione si vuole iniziare la scrittura del file (digitare 0 se si vuole leggere dall'inizio):", CMD_LINE);
+				printf("%sInserire da quale posizione si vuole iniziare la scrittura del file \n(digitare 0 se si vuole leggere dall'inizio):", CMD_LINE);
 				int position;
 				scanf("%d", &position);
 				printf("position %d\n", position);
+				fflush(stdin);
 				while(position<0){
 					printf("Errore: impossibile inserire un valore negativo\n");
-					printf("%sInserire da quale posizione si vuole iniziare la scrittura del file (digitare 0 se si vuole leggere dall'inizio):", CMD_LINE);
+					printf("%sInserire da quale posizione si vuole iniziare la scrittura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
 					scanf("%d", &position);
+					fflush(stdin);
 				}
 				if(position!=0){
 					ret=lseek(fd, position, SEEK_SET);
@@ -197,7 +201,9 @@ int main(){
 			//printf("Read file digitato\n");
 			printf("%sInserire il nome del file in cui scrivere: ", CMD_LINE);
 			scanf("%s", info);
+			//fflush(stdin);
 			int inode=searchElement(info, current_path);
+			fflush(stdin);
 			if(inode==0){
 				printf("Errore: il file cercato non è presente nella directory corrente\n");
 			}else{
@@ -209,14 +215,16 @@ int main(){
 				if(fd==-1) handle_error("Errore: impossibile aprire il file in lettura\n");
 				printf("Apertura del file in corso...\n");
 				
-				printf("%sInserire da quale posizione si vuole iniziare la lettura del file (digitare 0 se si vuole leggere dall'inizio):", CMD_LINE);
+				printf("%sInserire da quale posizione si vuole iniziare la lettura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
 				int position;
 				scanf("%d", &position);
 				printf("position %d\n", position);
+				fflush(stdin);
 				while(position<0){
 					printf("Errore: impossibile inserire un valore negativo\n");
-					printf("%sInserire da quale posizione si vuole iniziare la lettura del file (digitare 0 se si vuole leggere dall'inizio):", CMD_LINE);
+					printf("%sInserire da quale posizione si vuole iniziare la lettura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
 					scanf("%d", &position);
+					fflush(stdin);
 				}
 				if(position!=0){
 					ret=lseek(fd, position, SEEK_SET);
@@ -239,39 +247,42 @@ int main(){
 				}else{
 					printf("%s", msg);
 				}
-				printf("\n");
 				ret=close(fd);
 				if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor del file aperto in lettura\n");
 				memset(msg, 0, 1024);
 			}
 		}else if(strcmp(SEEK_FILE_CMD, cmd)==0){
 			//printf("Seek file digitato\n");
-			printf("Prima di eseguire la lettura o la scrittura di un file è possibile spostare la posizione corrente del file stesso, in modo tale che tali operazioni possano avvenire nel punto desiderato\n");
-			printf("NB: se non si vuole specificare il punto in cui iniziare a leggere o scrivere un file, le operazioni saranno eseguite dall'inizio del file\n");
+			printf("Prima di eseguire la lettura o la scrittura di un file è possibile spostare la \nposizione corrente del file stesso, in modo tale che tali operazioni possano \navvenire nel punto desiderato\n");
+			printf("NB: se non si vuole specificare il punto in cui iniziare a leggere o \nscrivere un file, le operazioni saranno eseguite dall'inizio del file\n");
 		}else if(strcmp(CREATE_DIRECTORY_CMD, cmd)==0){//GESTIRE IL PERCORSO E INODE PADRE
 			printf("%sInserire il nome della directory da creare: ", CMD_LINE);
 			scanf("%s", info);
 			sprintf(elem, "%s %s %s %s %s %d", CREAT_CMD, info, DIR_TYPE, user, current_path, fat_padre->inode);
 			sendToServer(elem);
 			wait_server=1;
+			//fflush(stdin);
 		}else if(strcmp(ERASE_DIRECTORY_CMD, cmd)==0){//GESTIRE LA POSIZIONE
 			printf("%sInserire il nome della directory da eliminare: ", CMD_LINE);
 			scanf("%s", info);
 			sprintf(elem, "%s %s %s %s", DELETE_CMD, info, DIR_TYPE, current_path);
+			//fflush(stdin);
 			char risposta[1];
 			printf("%sEliminando la directory '%s' eliminerai tutto il suo contenuto. Proseguire?[S/n]", CMD_LINE, info);
 			scanf("%s", risposta);
 			if(strcmp(risposta,"S")==0){
 				printf("Selezionato si\n");
 				sendToServer(elem);
+				wait_server=1;
 			}else{
 				printf("Selezionato no o carattere diverso\n");
+				fflush(stdin);
 			}
-			wait_server=1;
 		}else if(strcmp(CHANGE_DIRECTORY_CMD, cmd)==0){
 			//printf("Change directory digitato\n");
 			printf("%sInserire il nome della directory in cui spostarsi: ", CMD_LINE);
 			scanf("%s", info);
+			fflush(stdin);
 			if(strcmp(MOVE_FATHER, info)==0){
 				if(strcmp(FILE_SYSTEM_DIRECTORY, fat_padre->name)==0){
 					printf("Errore: impossibile spostarsi nella direcotry padre di %s\n", FILE_SYSTEM_DIRECTORY);
@@ -308,7 +319,7 @@ int main(){
 					currentPath();
 				}else{
 					printf("Errore: la directory %s non è presente nella directory corrente\n", info);
-					printf("Si consiglia di eseguire ld (list direcotry) per visualizzare gli elementi presenti nella directory corrente\n");
+					printf("Si consiglia di eseguire ld (list direcotry) per visualizzare gli elementi \npresenti nella directory corrente\n");
 				}
 			}
 		}else if(strcmp(LIST_DIRECTORY_CMD, cmd)==0){
@@ -324,6 +335,7 @@ int main(){
 			}
 		}else if(strcmp(HELP_CMD, cmd)==0){
 			printInfo();
+			printInfoMD();
 		}else if(strcmp(EXIT_CMD, cmd)==0){
 			e=1;
 			printf("Uscendo dal sistema...\n");
@@ -351,11 +363,19 @@ int main(){
 			if(ret==-1) handle_error("Errore: sem_post main	\n");
 			stampaArray();
 		}
-		
+		while(getchar()!='\n');
 		memset(cmd, 0, 50);
 		memset(info, 0, 50);
 		memset(elem, 0, 100);
+		fflush(stdin);
+		fflush(stdout);
 	}
+	ret=sem_close(server);
+	if(ret==-1) handle_error("Errore: sem_close server\n");
+	ret=sem_close(shmem);
+	if(ret==-1) handle_error("Errore: sem_close shmem\n");
+	ret=sem_close(main_s);
+	if(ret==-1) handle_error("Errore: sem_close main\n");
 	printf("Grazie per aver lavorato con noi\n");
 	exit(1);
 }

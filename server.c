@@ -1,4 +1,3 @@
-#include "fun.h"
 #include "var.h"
 #include "fun_server.h"
 
@@ -13,16 +12,11 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-int inode_fat=0;
-int inode_dir=1;
-int fdfat;
-char buf[100];
-sem_t* server;
-sem_t* shmem;
-sem_t* main_s;
-
 int main(){
 	array_fat=(struct fat**)malloc(sizeof(struct fat*)*MAX_INODE);
+	
+	inode_fat=0;
+	inode_dir=1;
 	
 	sem_unlink(SEM_SERVER);
 	server=NULL;
@@ -189,10 +183,10 @@ int main(){
 	ret=sem_close(main_s);
 	if(ret==-1) handle_error("Errore: sem_close main\n");
 	
-	ret=sem_destroy(server);
+	ret=sem_unlink(SEM_SERVER);
 	if(ret==-1) handle_error("Errore: sem_destroy server\n");
-	ret=sem_destroy(shmem);
+	ret=sem_unlink(SEM_MAIN);
 	if(ret==-1) handle_error("Errore: sem_destroy shmem\n");
-	ret=sem_destroy(main_s);
+	ret=sem_unlink(SEM_SHMEM);
 	if(ret==-1) handle_error("Errore: sem_destroy main\n");	
 }

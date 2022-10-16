@@ -1,5 +1,4 @@
 #include "fun_main.h"
-#include "fun.h"
 #include "var.h"
 
 #include <stdio.h>
@@ -26,6 +25,13 @@ void printInfo(){
 	printf("\thelp -> comando per visualizzare i comandi eseguibili nel sistema\n");
 	printf("\texit -> comando per chiudere il sistema\n");
 	printf("\tclose -> comando per chiudere sia il sistema sia il server\n");
+}
+
+void printInfoMD(){
+	printf("Nel dettaglio, il comando 'md' dovrà essere seguito da:\n");
+	printf("\tnome della direcotry -> se l'utente si vorrà spostare in una \n\tdelle direcotry presenti in quella corrente\n");
+	printf("\t.. -> se l'utente vorrà spostarsi nella direcotry in cui è contenuta la \n\tdirectory corrente\n");
+	printf("NB: non è possibile spostarsi in una directory che non esiste in quella corrente e non è possibile spostarsi nella directory padre di '%s'\n", FILE_SYSTEM_DIRECTORY);
 }
 
 void sharing_father(){
@@ -126,7 +132,7 @@ void waitResult(){
 	if(ret==-1) handle_error("Errore: impossibile eliminare il canale di comunicazione\n");
 }
 
-void stampaArray(){
+void stampaArray(){  //DA CANCELLARE
 	printf("Stampa array:\n");
 	for(int i=0; i<MAX_INODE; i++){
 		//printf("%d NULL? %d\n", i, array_fat[i]==NULL);

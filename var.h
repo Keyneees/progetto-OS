@@ -1,8 +1,5 @@
 #define MAX_INODE 128
-#define MAX_LENGTH_FILE_NAME 32
-#define SERVER_FATHER -1
 
-#define FAT_FILE_NAME "FAT.txt"
 #define FILE_SYSTEM_DIRECTORY "file_system"
 #define GENERIC_CREATOR "server"
 
@@ -17,18 +14,14 @@
 #define DELETE_CMD "delete"
 #define UPDATE_CMD "update"
 #define CLOSE_CMD "close"
-#define SEPARATOR " \n"
 
-#define PERMESSI_FILE 0666
-#define PERMESSI_DIRECTORY 0777
 #define INODE_LIMIT 999
 
 #define SEM_SERVER "/server"
 #define SEM_MAIN "/main"
 #define SEM_SHMEM "/shmem"
 
-int next_inode;
-char* current_path;
+#include <semaphore.h>
 
 struct fat{
 	int inode;
@@ -41,5 +34,9 @@ struct fat{
 };
 
 struct fat** array_fat;
-struct fat* fat_padre;
+int next_inode;
+char* current_path;
+sem_t* server;
+sem_t* shmem;
+sem_t* main_s;
 
