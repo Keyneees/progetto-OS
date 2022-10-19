@@ -1,9 +1,9 @@
-0 FAT.txt / F server 938 -1
+0 FAT.txt / F server 886 -1
 1 file_system / D server 4096 -1
 2 prova file_system/ D lol 0 1
 3 ert file_system/ F p 0 1
 4 qwe file_system/ F p 0 1
-5 allora file_system/ F qwe 0 1
+5
 6 all'infinito file_system/ F we 0 1
 7 eee file_system/ F qwe 0 1
 8 rpoviamo file_system/ F q 0 1
@@ -13,12 +13,12 @@
 12 testiamo file_system/ F qwe 0 1
 13 fnkdjnvdjkv file_system/ D sd 0 1
 14 sdfnsdjksdfnk file_system/ F ppp 0 1
-15 s file_system/ D ppp 0 1
-16 lol file_system/s/ F sdf 0 15
-17 yeye file_system/s/ D sdf 0 15
-18
+15
+16
+17
+18 dfnksnfk file_system/ F john 0 1
 19
-20
+20 poppoù file_system/ F c7 0 1
 21
 22
 23

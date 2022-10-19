@@ -63,7 +63,11 @@ void sharing_father(){
 				array_fat[i]->inode=shmem[i].inode;
 				array_fat[i]->size=shmem[i].size;
 				array_fat[i]->inode_padre=shmem[i].inode_padre;
-				strcpy(array_fat[i]->name, shmem[i].name);
+				//strcpy(array_fat[i]->name, shmem[i].name);
+				int l=strlen(shmem[i].name);
+				for(int j=0; j<l; j++){
+					array_fat[i]->name[j]=shmem[i].name[j];
+				}
 				strcpy(array_fat[i]->path, shmem[i].path);
 				strcpy(array_fat[i]->type, shmem[i].type);
 				strcpy(array_fat[i]->creator, shmem[i].creator);

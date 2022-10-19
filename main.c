@@ -12,7 +12,7 @@
 //char* current_path;
 
 int main(){
-	array_fat=(struct fat**)malloc(sizeof(struct fat*));
+	array_fat=(struct fat**)malloc(sizeof(struct fat*)*MAX_INODE);
 	
 	//sem_unlink(SEM_SERVER);
 	//server=malloc(sizeof(sem_t));
