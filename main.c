@@ -31,7 +31,7 @@ int main(){
 	if(shmem==SEM_FAILED) handle_error("Errore: impossibile avviare sem_shmem\n");
 	
 	for(int i=0; i<MAX_INODE; i++){
-		array_fat[i]=(struct fat*)malloc(sizeof(struct fat));	
+		//array_fat[i]=(struct fat*)malloc(sizeof(struct fat));	
 		array_fat[i]=NULL;
 	}
 	printf("%sInserire il nome per il login: ", CMD_LINE);
@@ -68,10 +68,26 @@ int main(){
 			fat_padre->inode=array_fat[i]->inode;
 			fat_padre->size=array_fat[i]->size;
 			fat_padre->inode_padre=array_fat[i]->inode_padre;
-			strcpy(fat_padre->name, array_fat[i]->name);
-			strcpy(fat_padre->path, array_fat[i]->path);
-			strcpy(fat_padre->type, array_fat[i]->type);
-			strcpy(fat_padre->creator, array_fat[i]->creator);
+			//strcpy(fat_padre->name, array_fat[i]->name);
+			int l=strlen(array_fat[i]->name);
+			for(int j=0; j<l; j++){
+				fat_padre->name[j]=array_fat[i]->name[j];
+			}
+			//strcpy(fat_padre->path, array_fat[i]->path);
+			l=strlen(array_fat[i]->path);
+			for(int j=0; j<l; j++){
+				fat_padre->path[j]=array_fat[i]->path[j];
+			}
+			//strcpy(fat_padre->type, array_fat[i]->type);
+			l=strlen(array_fat[i]->type);
+			for(int j=0; j<l; j++){
+				fat_padre->type[j]=array_fat[i]->type[j];
+			}
+			//strcpy(fat_padre->creator, array_fat[i]->creator);
+			l=strlen(array_fat[i]->creator);
+			for(int j=0; j<l; j++){
+				fat_padre->creator[j]=array_fat[i]->creator[j];
+			}
 			trovato=1;
 		}else{
 			i++;
@@ -85,6 +101,7 @@ int main(){
 		printf("Padre trovato\n");
 	}
 	unlink(FIFO_FOR_RES);
+	current_path=NULL;
 	currentPath();
 	int wait_server=0;
 	while(!e){
@@ -127,7 +144,7 @@ int main(){
 				if(fd==-1) handle_error("Errore: impossibile aprire il file in scrittura\n");
 				printf("Apertura del file in corso...\n");
 				
-				printf("%sInserire da quale posizione si vuole iniziare la scrittura del file \n(digitare 0 se si vuole leggere dall'inizio):", CMD_LINE);
+				printf("%sInserire da quale posizione si vuole iniziare la scrittura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
 				int position;
 				scanf("%d", &position);
 				printf("position %d\n", position);
@@ -193,6 +210,7 @@ int main(){
 				}
 				ret=close(fd);
 				if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor del file aperto in scrittura\n");
+				free(filename);
 				memset(msg, 0, 1024);
 				memset(old_msg, 0, 1024);
 				fflush(stdin);
@@ -250,6 +268,7 @@ int main(){
 				ret=close(fd);
 				if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor del file aperto in lettura\n");
 				memset(msg, 0, 1024);
+				free(filename);
 			}
 		}else if(strcmp(SEEK_FILE_CMD, cmd)==0){
 			//printf("Seek file digitato\n");
@@ -363,7 +382,7 @@ int main(){
 			if(ret==-1) handle_error("Errore: sem_post main	\n");
 			stampaArray();
 		}
-		while(getchar()!='\n');
+		//while(getchar()!='\n');
 		memset(cmd, 0, 50);
 		memset(info, 0, 50);
 		memset(elem, 0, 100);
@@ -377,5 +396,14 @@ int main(){
 	ret=sem_close(main_s);
 	if(ret==-1) handle_error("Errore: sem_close main\n");
 	printf("Grazie per aver lavorato con noi\n");
+	
+	for(int i=0; i<MAX_INODE; i++){
+		if(array_fat[i]!=NULL){
+			free(array_fat[i]);
+		}
+	}
+	free(array_fat);
+	free(fat_padre);
+	free(current_path);
 	exit(1);
 }

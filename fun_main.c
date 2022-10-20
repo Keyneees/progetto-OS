@@ -68,9 +68,21 @@ void sharing_father(){
 				for(int j=0; j<l; j++){
 					array_fat[i]->name[j]=shmem[i].name[j];
 				}
-				strcpy(array_fat[i]->path, shmem[i].path);
-				strcpy(array_fat[i]->type, shmem[i].type);
-				strcpy(array_fat[i]->creator, shmem[i].creator);
+				//strcpy(array_fat[i]->path, shmem[i].path);
+				l=strlen(shmem[i].path);
+				for(int j=0; j<l; j++){
+					array_fat[i]->path[j]=shmem[i].path[j];
+				}
+				//strcpy(array_fat[i]->type, shmem[i].type);
+				l=strlen(shmem[i].type);
+				for(int j=0; j<l; j++){
+					array_fat[i]->type[j]=shmem[i].type[j];
+				}
+				//strcpy(array_fat[i]->creator, shmem[i].creator);
+				l=strlen(shmem[i].creator);
+				for(int j=0; j<l; j++){
+					array_fat[i]->creator[j]=shmem[i].creator[j];
+				}
 			}
 	}
 	shmdt((void *)shmem);
@@ -150,18 +162,22 @@ void stampaArray(){  //DA CANCELLARE
 }
 
 void currentPath(){
+	if(current_path!=NULL){
+		free(current_path);
+	}
 	if(strcmp(fat_padre->path, "/")==0){
-		printf("Percorso trovato: /\n");
+		//printf("Percorso trovato: /\n");
 		current_path=(char*)malloc(sizeof(char)*(strlen(fat_padre->name)+3));
 		current_path=strcpy(current_path, fat_padre->name);
 		current_path=strcat(current_path, "/");
 	}else{
-		printf("Percorso non basilare\n");
+		//printf("Percorso non basilare\n");
 		current_path=(char*)malloc(sizeof(char)*(strlen(fat_padre->path)+strlen(fat_padre->name)+3));
 		current_path=strcpy(current_path, fat_padre->path);
 		current_path=strcat(current_path, fat_padre->name);
 		current_path=strcat(current_path, "/");
 	}
+	printf("Percorso corrente: %s\n", current_path);
 }
 
 int searchElement(char* name, char* path){
