@@ -17,9 +17,9 @@
 
 #define INODE_LIMIT 999
 
-#define SEM_SERVER "/server"
-#define SEM_MAIN "/main"
-#define SEM_SHMEM "/shmem"
+#define SEM_SERVER "/server\0"
+#define SEM_MAIN "/main\0"
+#define SEM_SHMEM "/shmem\0"
 
 #include <semaphore.h>
 

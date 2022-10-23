@@ -59,7 +59,7 @@ void sharing_father(){
 				//array_fat[i]=(struct fat*)malloc(sizeof(struct fat));
 				array_fat[i]=NULL;
 			}else{
-				array_fat[i]=(struct fat*)malloc(sizeof(struct fat));
+				array_fat[i]=(struct fat*)calloc(1, sizeof(struct fat));
 				array_fat[i]->inode=shmem[i].inode;
 				array_fat[i]->size=shmem[i].size;
 				array_fat[i]->inode_padre=shmem[i].inode_padre;
@@ -118,8 +118,8 @@ void sendToServer(char* elem){
 }
 
 void waitResult(){
-	int ret=mkfifo(FIFO_FOR_RES, 0666);
-	if(ret==-1) handle_error("Errore: impossibile creare la fifo per ricevere istruzioni dagli utenti\n");	
+	//unlink(FIFO_FOR_RES);
+	int ret;
 	int fdfifo=open(FIFO_FOR_RES, O_RDONLY);
 	if(fdfifo==-1) handle_error("Errore: impossibile aprire la fifo per comunicare con gli utenti\n");
 	int bytes_read=0;
@@ -144,8 +144,6 @@ void waitResult(){
 	printf("%s\n", res);
 	ret=close(fdfifo);
 	if(ret==-1) handle_error("Errore: impossibile chiudere il canale di comunicazione\n");
-	ret=unlink(FIFO_FOR_RES);
-	if(ret==-1) handle_error("Errore: impossibile eliminare il canale di comunicazione\n");
 }
 
 void stampaArray(){  //DA CANCELLARE
@@ -165,19 +163,61 @@ void currentPath(){
 	if(current_path!=NULL){
 		free(current_path);
 	}
-	if(strcmp(fat_padre->path, "/")==0){
+	if(memcmp(fat_padre->path, "/", 1)==0){
 		//printf("Percorso trovato: /\n");
-		current_path=(char*)malloc(sizeof(char)*(strlen(fat_padre->name)+3));
-		current_path=strcpy(current_path, fat_padre->name);
-		current_path=strcat(current_path, "/");
+		current_path=(char*)calloc(strlen(fat_padre->name)+3, sizeof(char));
+		/*current_path=strcpy(current_path, fat_padre->name);
+		current_path=strcat(current_path, "/");*/
+		int j=0;
+		int k=0;
+		int e=0;
+		while(!e){
+			//printf("%c %d\n", fat_padre->path[k], fat_padre->path[k]);
+			if(fat_padre->name[j]){
+				current_path[k]=fat_padre->name[j];
+				j++;
+			}else{
+				current_path[k]='/';
+				e=1;
+			}
+			k++;
+		}
 	}else{
 		//printf("Percorso non basilare\n");
-		current_path=(char*)malloc(sizeof(char)*(strlen(fat_padre->path)+strlen(fat_padre->name)+3));
-		current_path=strcpy(current_path, fat_padre->path);
+		int size=strlen(fat_padre->path)+strlen(fat_padre->name)+3;
+		current_path=(char*)calloc(size, sizeof(char));
+		/*current_path=strcpy(current_path, fat_padre->path);
 		current_path=strcat(current_path, fat_padre->name);
-		current_path=strcat(current_path, "/");
+		current_path=strcat(current_path, "/");*/
+		int k=0;
+		int i=0;
+		int j=0;
+		int e=0;
+		while(!e){
+			//printf("%c %d\n", fat_padre->path[k], fat_padre->path[k]);
+			if(fat_padre->path[i]){
+				current_path[k]=fat_padre->path[i];
+				i++;
+			}else if(fat_padre->name[j]){
+				current_path[k]=fat_padre->name[j];
+				j++;
+			}else{
+				current_path[k]='/';
+				e=1;
+			}
+			k++;
+		}
+		/*memcpy(current_path, fat_padre->path, strlen(fat_padre->path));
+		memmove(current_path, fat_padre->name, strlen(fat_padre->name));
+		memmove(current_path, "/", 1);*/
 	}
-	printf("Percorso corrente: %s\n", current_path);
+	printf("Percorso corrente: ");
+	int i=0;
+	while(current_path[i]){
+		printf("%c", current_path[i]);
+		i++;
+	}
+	printf("\n");
 }
 
 int searchElement(char* name, char* path){
@@ -204,5 +244,23 @@ int searchElement(char* name, char* path){
 	}else{
 		printf("Elemento non trovato\n");
 		return 0;
+	}
+}
+
+/*int compareArrayString(char elem[64], char* cmp){
+	int ret=1;
+	int i=0;
+	while(i<64 && ret){
+		printf("elem[%d] %c cmp[%d] %c\n", i, elem[i], i, cmp[i]);
+		i++;
+	}
+	return ret;
+}*/
+
+void compareArrayString(char elem[64], char copy[64]){
+	int k=0;
+	while(copy[k]){
+		elem[k]=copy[k];
+		k++;
 	}
 }

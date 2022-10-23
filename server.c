@@ -19,7 +19,10 @@ int main(){
 	inode_dir=1;
 	
 	sem_unlink(SEM_SERVER);
-	server=NULL;
+	//server=NULL;
+	/*server=(sem_t*)malloc(sizeof(sem_t));
+	//memset(&server, 0, sizeof(sem_t));
+	*server=0;*/
 	server=sem_open(SEM_SERVER, O_CREAT | O_EXCL, 0666, 1);
 	if(server==SEM_FAILED) handle_error("Errore: impossibile avviare sem_server\n");
 	
@@ -68,6 +71,9 @@ int main(){
 		printf("Il file esiste\n");
 		//CARICARE LA STRUTTURA CHE TIENE MEMORIA DEI FILE E DELLE DIRECTORY CREATE
 		loadFAT();
+		printf("Closing file\n");
+		fclose(exist);
+		printf("File close\n");
 	}
 	stampaArray();
 	nextInode();
@@ -188,5 +194,12 @@ int main(){
 	ret=sem_unlink(SEM_MAIN);
 	if(ret==-1) handle_error("Errore: sem_destroy shmem\n");
 	ret=sem_unlink(SEM_SHMEM);
-	if(ret==-1) handle_error("Errore: sem_destroy main\n");	
+	if(ret==-1) handle_error("Errore: sem_destroy main\n");
+	
+	for(int i=0; i<MAX_INODE; i++){
+		if(array_fat[i]!=NULL){
+			free(array_fat[i]);
+		}
+	}
+	free(array_fat);
 }

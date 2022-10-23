@@ -8,6 +8,8 @@
 #include <semaphore.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 //char* current_path;
 
@@ -30,6 +32,10 @@ int main(){
 	shmem=sem_open(SEM_SHMEM, O_CREAT);
 	if(shmem==SEM_FAILED) handle_error("Errore: impossibile avviare sem_shmem\n");
 	
+	unlink(FIFO_FOR_RES);
+	int ret=mkfifo(FIFO_FOR_RES, 0666);
+	if(ret==-1) handle_error("Errore: impossibile creare la fifo per ricevere istruzioni dagli utenti\n");
+	
 	for(int i=0; i<MAX_INODE; i++){
 		//array_fat[i]=(struct fat*)malloc(sizeof(struct fat));	
 		array_fat[i]=NULL;
@@ -46,11 +52,10 @@ int main(){
 	printInfo();
 	printInfoMD();
 	
-	char cmd[50];
-	char info[50];
-	char elem[100];
+	char cmd[50]={0};
+	char info[50]={0};
+	char elem[100]={0};
 	int e=0;
-	int ret;
 	sharing_father();
 	//stampaArray();
 	/*inode_padre=fat_padre->inode;
@@ -63,31 +68,39 @@ int main(){
 	int trovato=0;
 	int i=0;
 	while(!trovato && i<MAX_INODE){
-		if(strcmp(array_fat[i]->name, FILE_SYSTEM_DIRECTORY)==0){
-			fat_padre=(struct fat*)malloc(sizeof(struct fat));
+		if(memcmp(array_fat[i]->name, FILE_SYSTEM_DIRECTORY, strlen(FILE_SYSTEM_DIRECTORY))==0){
+			fat_padre=(struct fat*)calloc(1, sizeof(struct fat));
 			fat_padre->inode=array_fat[i]->inode;
 			fat_padre->size=array_fat[i]->size;
 			fat_padre->inode_padre=array_fat[i]->inode_padre;
+			memset(fat_padre->name, 0, 64);
 			//strcpy(fat_padre->name, array_fat[i]->name);
 			int l=strlen(array_fat[i]->name);
+			/*for(int k=0; k<64; k++){
+				printf("name[%d] %c\n", k, array_fat[i]->name[k]);
+			}*/
+			compareArrayString(fat_padre->name, array_fat[i]->name);/*
 			for(int j=0; j<l; j++){
 				fat_padre->name[j]=array_fat[i]->name[j];
-			}
+			}*/
 			//strcpy(fat_padre->path, array_fat[i]->path);
-			l=strlen(array_fat[i]->path);
+			/*l=strlen(array_fat[i]->path);
 			for(int j=0; j<l; j++){
 				fat_padre->path[j]=array_fat[i]->path[j];
-			}
+			}*/
+			compareArrayString(fat_padre->path, array_fat[i]->path);
 			//strcpy(fat_padre->type, array_fat[i]->type);
-			l=strlen(array_fat[i]->type);
+			/*l=strlen(array_fat[i]->type);
 			for(int j=0; j<l; j++){
 				fat_padre->type[j]=array_fat[i]->type[j];
-			}
+			}*/
+			compareArrayString(fat_padre->type, array_fat[i]->type);
 			//strcpy(fat_padre->creator, array_fat[i]->creator);
-			l=strlen(array_fat[i]->creator);
+			/*l=strlen(array_fat[i]->creator);
 			for(int j=0; j<l; j++){
 				fat_padre->creator[j]=array_fat[i]->creator[j];
-			}
+			}*/
+			compareArrayString(fat_padre->creator, array_fat[i]->creator);
 			trovato=1;
 		}else{
 			i++;
@@ -100,7 +113,7 @@ int main(){
 	}else{
 		printf("Padre trovato\n");
 	}
-	unlink(FIFO_FOR_RES);
+	
 	current_path=NULL;
 	currentPath();
 	int wait_server=0;
@@ -162,7 +175,7 @@ int main(){
 					}
 				}
 				
-				char old_msg[1024];
+				char old_msg[1024]={0};
 				ret=1;
 				printf("Contenuto del file '%s':\n", info);
 				while(ret!=0 && ret!=-1){
@@ -191,7 +204,7 @@ int main(){
 				ret=lseek(fd, position, SEEK_SET);
 				if(ret==-1) printf("Errore: impossibile spostare la posizione del file\n");
 				printf("%sScrivere il contenuto da inserire nel file:\n", CMD_LINE);
-				char msg[1024];
+				char msg[1024]={0};
 				getchar();
 				fgets(msg, 1024, stdin);
 				int wf=write(fd, msg, strlen(msg));
@@ -234,7 +247,7 @@ int main(){
 				printf("Apertura del file in corso...\n");
 				
 				printf("%sInserire da quale posizione si vuole iniziare la lettura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
-				int position;
+				int position=0;
 				scanf("%d", &position);
 				printf("position %d\n", position);
 				fflush(stdin);
@@ -251,7 +264,7 @@ int main(){
 					}
 				}
 				
-				char msg[1024];
+				char msg[1024]={0};
 				ret=1;
 				printf("Contenuto del file '%s':\n", info);
 				while(ret!=0 && ret!=-1){
@@ -286,8 +299,8 @@ int main(){
 			scanf("%s", info);
 			sprintf(elem, "%s %s %s %s", DELETE_CMD, info, DIR_TYPE, current_path);
 			//fflush(stdin);
-			char risposta[1];
-			printf("%sEliminando la directory '%s' eliminerai tutto il suo contenuto. Proseguire?[S/n]", CMD_LINE, info);
+			char risposta[1]={0};
+			printf("%sEliminando la directory '%s' eliminerai tutto il suo contenuto.\nProseguire?[S/n]: ", CMD_LINE, info);
 			scanf("%s", risposta);
 			if(strcmp(risposta,"S")==0){
 				printf("Selezionato si\n");
@@ -405,5 +418,8 @@ int main(){
 	free(array_fat);
 	free(fat_padre);
 	free(current_path);
+	
+	ret=unlink(FIFO_FOR_RES);
+	if(ret==-1) handle_error("Errore: impossibile eliminare il canale di comunicazione\n");
 	exit(1);
 }
