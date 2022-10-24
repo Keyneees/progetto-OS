@@ -138,7 +138,7 @@ int main(){
 			char* nome=strtok(NULL, SEPARATOR);
 			char* type=strtok(NULL, SEPARATOR);
 			char* path=strtok(NULL, SEPARATOR);
-			int inode=searchElement(nome, path);
+			int inode=searchElement(nome, path, *type);
 			if(inode){
 				if(strcmp(type, DIR_TYPE)==0){
 					printf("Cancello direcotry...\n");
@@ -151,7 +151,7 @@ int main(){
 				sizeUpdate(inode_fat);
 				nextInode(fdfat);
 			}else{
-				sendResult("File o directory non esiste\n");
+				sendResult("Impossibile eliminare il file o la directory\n");
 			}
 		}else if(strcmp(elem, UPDATE_CMD)==0){
 			//GESTIONE AGGIORNAMENTO DIMESIONE DI UNA RIGA DEL FILE FAT.txt

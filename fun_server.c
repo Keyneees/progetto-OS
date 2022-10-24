@@ -412,20 +412,21 @@ void stampaArray(){
 	}
 }
 
-int searchElement(char* name, char* path){
+int searchElement(char* name, char* path, char type){
 	printf("Ricerca dell'elemento...\n");
-	int trovato=0;
 	int inode;
+	int trovato=0;
 	printf("Nome: %s\nPath: %s\n", name, path);
 	for(int i=0; i<MAX_INODE && !trovato; i++){
 		if(array_fat[i]!=NULL){
-			if(strcmp(array_fat[i]->name, name)==0 && strcmp(array_fat[i]->path, path)==0){
+			if(strcmp(array_fat[i]->name, name)==0 && strcmp(array_fat[i]->path, path)==0 && array_fat[i]->type[0]==type){
 				printf("Elemento trovato\n");
 				inode=i;
 				trovato=1;
 			}else{
 				printf("%d: Elemento con nome o percorso diverso\n", i);
 			}
+			printf("%c %c\n", array_fat[i]->type[0], type);
 		}else{
 			printf("%d: Elemento assente\n", i);
 		}
