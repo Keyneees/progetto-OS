@@ -285,7 +285,7 @@ int isNumber(char src[64]){
 	//printf("element ");
 	int len=strlen(src);
 	for(int i=0; i<len && ret; i++){
-		if(src[i]<48 || src[i]>57 && src[i]>10){
+		if((src[i]<48 || src[i]>57) && src[i]>10){
 			ret=0;
 		}
 		//printf("%c %d", src[i], src[i]);

@@ -16,7 +16,7 @@
 
 //FUNZONI PER I FILE
 void createFile(int inode, char* filename, char* type, char* creator, char* path, int inode_padre){
-	int ret;
+	//int ret;
 	char res[128]={0};
 	memset(res, 0, 128);
 	if(next_inode<MAX_INODE){
@@ -208,7 +208,7 @@ void eraseDirectory(int inode){
 		array_fat[inode]->size=s.st_size;
 		
 		if(strcmp(array_fat[inode]->creator,GENERIC_CREATOR)){
-			/*char elem[100];
+			char elem[100];
 			sprintf(elem, "%s %d %s %s %s %s %d %d\n", UPDATE_CMD, inode, array_fat[inode]->name, 
 			array_fat[inode]->path, array_fat[inode]->type, array_fat[inode]->creator, array_fat[inode]->size, 
 			array_fat[inode]->inode_padre);

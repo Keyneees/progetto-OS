@@ -89,7 +89,7 @@ int main(){
 			fat_padre->inode_padre=array_fat[i]->inode_padre;
 			memset(fat_padre->name, 0, 64);
 			//strcpy(fat_padre->name, array_fat[i]->name);
-			int l=strlen(array_fat[i]->name);
+			//int l=strlen(array_fat[i]->name);
 			/*for(int k=0; k<64; k++){
 				printf("name[%d] %c\n", k, array_fat[i]->name[k]);
 			}*/

@@ -1,39 +1,40 @@
-OBJS	= fun_server.o main.o fun.o server.o
-OUT	= main, server
+OBJS	= main.o fun_main.o server.o fun_server.o
+OUT	= main,server
 
-OBJS0	= fun_server.o main.o
-SOURCE0	= fun_server.c main.c
-HEADER0	= fun_main.h var.h
+OBJS0	= main.o fun_main.o
+SOURCE0	= main.c fun_main.c
+HEADER0	= var.h fun_main.h
 OUT0	= main
 
-OBJS1	= fun.o fun_server.o server.o
-SOURCE1	= fun.c fun_server.c server.c
-HEADER1	= fun.h fun_server.h var.h
+OBJS1	= server.o fun_server.o
+SOURCE1	= server.c fun_server.c
+HEADER1	= var.h fun_server.h
 OUT1	= server
 
 CC	 = gcc
 FLAGS	 = -g -c -Wall
-LFLAGS	 = -lrt
+LFLAGS	 = -lpthread -lrt
 
 all: main server
 
 main: $(OBJS0) $(LFLAGS)
-	$(CC) -g $(OBJS0) -o $(OUT0)
+	$(CC) -g $(OBJS0) -o $(OUT0) $(LFLAGS)
 
 server: $(OBJS1) $(LFLAGS)
-	$(CC) -g $(OBJS1) -o $(OUT1)
+	$(CC) -g $(OBJS1) -o $(OUT1) $(LFLAGS)
+
+main.o: main.c
+	$(CC) $(FLAGS) main.c 
+
+fun_main.o: fun_main.c
+	$(CC) $(FLAGS) fun_main.c 
+
+server.o: server.c
+	$(CC) $(FLAGS) $(LFLAGS) server.c 
 
 fun_server.o: fun_server.c
 	$(CC) $(FLAGS) fun_server.c 
 
-main.o: main.c,
-	$(CC) $(FLAGS) main.c, 
-
-fun.o: fun.c
-	$(CC) $(FLAGS) fun.c 
-
-server.o: server.c
-	$(CC) $(FLAGS) server.c
 
 clean:
 	rm -f $(OBJS) $(OUT)
