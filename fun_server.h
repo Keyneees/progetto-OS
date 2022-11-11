@@ -24,7 +24,7 @@ void createDirectory(int inode, char* directoryname, char* type, char* creator, 
 void eraseDirectory(int inode);
 
 //FUNZIONI EXTRA
-void sizeUpdate(int inode);
+//void sizeUpdate(int inode);
 void removeChild(int inode);void nextInode();
 void insertInFatFile(char *row, int inode);
 void loadFAT();

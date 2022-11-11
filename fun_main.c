@@ -12,7 +12,7 @@
 #include <errno.h>
 
 void printInfo(){
-	printf("In questo sistema potrai eseguire diverse operazioni su file e directory con i seguenti comandi:\n");
+	printf("In questo sistema potrai eseguire diverse operazioni su file e directory\ncon i seguenti comandi:\n");
 	printf("\tcf -> comando per creare un nuovo file\n");
 	printf("\tef -> comando per eliminare un file\n");
 	printf("\twf -> comando per scrivere in un file\n");
@@ -44,7 +44,11 @@ void sharing_father(){
 	if(fat_padre==MAP_FAILED) handle_error("Errore: impossibile recuperare dati dal memoria condivisa\n");
 	int ret=close(fd);
 	if(ret==-1) handle_error("Errore: impossibile chiudere la memoria condivisa\n");*/
-	
+	for(int i=0; i<MAX_INODE; i++){
+		if(array_fat[i]!=NULL){
+			free(array_fat[i]);
+		}
+	}
 	//RICEZIONE DELL'ARRAY DI ELEMENTI
 	int size=sizeof(struct fat)*MAX_INODE;
 	int id=shmget(12345, size, IPC_CREAT | 0666);
@@ -61,7 +65,7 @@ void sharing_father(){
 			}else{
 				array_fat[i]=(struct fat*)calloc(1, sizeof(struct fat));
 				array_fat[i]->inode=shmem[i].inode;
-				array_fat[i]->size=shmem[i].size;
+				//array_fat[i]->size=shmem[i].size;
 				array_fat[i]->inode_padre=shmem[i].inode_padre;
 				//strcpy(array_fat[i]->name, shmem[i].name);
 				int l=strlen(shmem[i].name);
@@ -151,7 +155,7 @@ void stampaArray(){  //DA CANCELLARE
 	for(int i=0; i<MAX_INODE; i++){
 		//printf("%d NULL? %d\n", i, array_fat[i]==NULL);
 		if(array_fat[i]!=NULL){
-			printf("Inode %d, size %d, creator %s, nome %s,\npercorso %s, tipo %s, inode padre %d\n\n", array_fat[i]->inode, array_fat[i]->size, array_fat[i]->creator, array_fat[i]->name, array_fat[i]->path, array_fat[i]->type, array_fat[i]->inode_padre);
+			printf("Inode %d, creator %s, nome %s,\npercorso %s, tipo %s, inode padre %d\n\n", array_fat[i]->inode, array_fat[i]->creator, array_fat[i]->name, array_fat[i]->path, array_fat[i]->type, array_fat[i]->inode_padre);
 		}else{
 			//printf("Inode %d, NULL\n", i);
 		}
@@ -221,46 +225,71 @@ void currentPath(){
 }
 
 int searchElement(char* name, char* path){
-	printf("Ricerca dell'elemento...\n");
+	//printf("Ricerca dell'elemento...\n");
 	int trovato=0;
 	int inode;
-	printf("Nome: %s\nPath: %s\n", name, path);
+	//printf("Nome: %s\nPath: %s\n", name, path);
 	for(int i=0; i<MAX_INODE && !trovato; i++){
 		if(array_fat[i]!=NULL){
 			if(strcmp(array_fat[i]->name, name)==0 && strcmp(array_fat[i]->path, path)==0){
-				printf("Elemento trovato\n");
+				//printf("Elemento trovato\n");
 				inode=i;
 				trovato=1;
 			}else{
-				printf("%d: Elemento con nome o percorso diverso\n", i);
+				//printf("%d: Elemento con nome o percorso diverso\n", i);
 			}
 		}else{
-			printf("%d: Elemento assente\n", i);
+			//printf("%d: Elemento assente\n", i);
 		}
 	}
 	if(trovato){
-		printf("Elemento trovato\n");
+		//printf("Elemento trovato\n");
 		return inode;
 	}else{
-		printf("Elemento non trovato\n");
+		//printf("Elemento non trovato\n");
 		return 0;
 	}
 }
 
-/*int compareArrayString(char elem[64], char* cmp){
-	int ret=1;
-	int i=0;
-	while(i<64 && ret){
-		printf("elem[%d] %c cmp[%d] %c\n", i, elem[i], i, cmp[i]);
-		i++;
-	}
-	return ret;
-}*/
-
-void compareArrayString(char elem[64], char copy[64]){
+void copyArrayString(char elem[64], char copy[64]){
 	int k=0;
 	while(copy[k]){
 		elem[k]=copy[k];
 		k++;
 	}
+}
+
+void getCmd(char dest[50], char src[50]){
+	int stop=0;
+	for(int i=0; i<50 && !stop; i++){
+		if(src[i]!=' ' && src[i]!='\n'){
+			dest[i]=src[i];
+		}else{
+			stop=1;
+		}
+	}
+}
+
+int compareArrayString(char elem[64], char copy[64]){
+	int ret=1;
+	for(int i=0; i<64 && ret; i++){
+		if(elem[i]==copy[i]){
+			ret=0;
+		}
+	}
+	return ret;
+}
+
+int isNumber(char src[64]){
+	int ret=1;
+	//printf("element ");
+	int len=strlen(src);
+	for(int i=0; i<len && ret; i++){
+		if(src[i]<48 || src[i]>57 && src[i]>10){
+			ret=0;
+		}
+		//printf("%c %d", src[i], src[i]);
+	}
+	//printf("\n");
+	return ret;
 }

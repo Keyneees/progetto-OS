@@ -41,20 +41,34 @@ int main(){
 		array_fat[i]=NULL;
 	}
 	printf("%sInserire il nome per il login: ", CMD_LINE);
-	scanf("%s", user);
+	fgets(user, 30, stdin);
+	for(int i=0; i<30; i++){
+		if(user[i]==10){
+			user[i]='\0';
+		}
+	}
 	while(strcmp(GENERIC_CREATOR, user)==0){
 		printf("Errore: non è possibile usare il nome %s. Si prega di inserire un nome diverso\n", user);
 		printf("%sInserire il nome per il login: ", CMD_LINE);
-		scanf("%s", user);
+		//scanf("%s", user);
+		fgets(user, 30, stdin);
+		for(int i=0; i<30; i++){
+			if(user[i]==10){
+				user[i]='\0';
+			}
+		}
 	}
-	printf("Benvenuto %s nel sistema FAT_OS\n", user);
+	printf("Benvenuto '%s' nel sistema FAT_OS\n", user);
 	/**/
 	printInfo();
 	printInfoMD();
 	
-	char cmd[50]={0};
+	char row[50]={0};
 	char info[50]={0};
+	char name[50]={0};
 	char elem[100]={0};
+	//char* cmd=(char*)calloc(64, sizeof(char));
+	char cmd[64]={0};
 	int e=0;
 	sharing_father();
 	//stampaArray();
@@ -71,7 +85,7 @@ int main(){
 		if(memcmp(array_fat[i]->name, FILE_SYSTEM_DIRECTORY, strlen(FILE_SYSTEM_DIRECTORY))==0){
 			fat_padre=(struct fat*)calloc(1, sizeof(struct fat));
 			fat_padre->inode=array_fat[i]->inode;
-			fat_padre->size=array_fat[i]->size;
+			//fat_padre->size=array_fat[i]->size;
 			fat_padre->inode_padre=array_fat[i]->inode_padre;
 			memset(fat_padre->name, 0, 64);
 			//strcpy(fat_padre->name, array_fat[i]->name);
@@ -79,7 +93,7 @@ int main(){
 			/*for(int k=0; k<64; k++){
 				printf("name[%d] %c\n", k, array_fat[i]->name[k]);
 			}*/
-			compareArrayString(fat_padre->name, array_fat[i]->name);/*
+			copyArrayString(fat_padre->name, array_fat[i]->name);/*
 			for(int j=0; j<l; j++){
 				fat_padre->name[j]=array_fat[i]->name[j];
 			}*/
@@ -88,19 +102,19 @@ int main(){
 			for(int j=0; j<l; j++){
 				fat_padre->path[j]=array_fat[i]->path[j];
 			}*/
-			compareArrayString(fat_padre->path, array_fat[i]->path);
+			copyArrayString(fat_padre->path, array_fat[i]->path);
 			//strcpy(fat_padre->type, array_fat[i]->type);
 			/*l=strlen(array_fat[i]->type);
 			for(int j=0; j<l; j++){
 				fat_padre->type[j]=array_fat[i]->type[j];
 			}*/
-			compareArrayString(fat_padre->type, array_fat[i]->type);
+			copyArrayString(fat_padre->type, array_fat[i]->type);
 			//strcpy(fat_padre->creator, array_fat[i]->creator);
 			/*l=strlen(array_fat[i]->creator);
 			for(int j=0; j<l; j++){
 				fat_padre->creator[j]=array_fat[i]->creator[j];
 			}*/
-			compareArrayString(fat_padre->creator, array_fat[i]->creator);
+			copyArrayString(fat_padre->creator, array_fat[i]->creator);
 			trovato=1;
 		}else{
 			i++;
@@ -118,56 +132,95 @@ int main(){
 	currentPath();
 	int wait_server=0;
 	while(!e){
-		//fflush(stdin);
 		printf("%s", CMD_LINE);
-		scanf("%s", cmd);
-		//printf("Comando inserito: %s\n", cmd);
+		fgets(row, 50, stdin);
+		if(row[0]==10){
+			fgets(row, 50, stdin);
+		}
+		//cmd=strtok(row, " \n");
+		getCmd(cmd, row);
 		if(strcmp(CREATE_FILE_CMD, cmd)==0){//GESTIRE IL PERCORSO E INODE PADRE
-			printf("%sInserire il nome del file da creare: ", CMD_LINE);
-			scanf("%s", info);
-			fflush(stdin);
-			printf("%s\n", info);
-			sprintf(elem, "%s %s %s %s %s %d", CREAT_CMD, info, FILE_TYPE, user, current_path, fat_padre->inode);
-			printf("Stringa mandata %s\n", elem);
+			printf("%sInserire il nome del file da creare senza spazi: ", CMD_LINE);
+			//scanf("%s", info);
+			fgets(info, 50, stdin);
+			getCmd(name, info);
+			//fflush(stdin);
+			//printf("%s\n", name);
+			sprintf(elem, "%s %s %s %s %s %d", CREAT_CMD, name, FILE_TYPE, user, current_path, fat_padre->inode);
+			//printf("Stringa mandata %s\n", elem);
 			sendToServer(elem);
 			wait_server=1;
 			//fflush(stdin);
 		}else if(strcmp(ERASE_FILE_CMD, cmd)==0){//GESTIRE LA POSZIONE
 			printf("%sInserire il nome del file da eliminare: ", CMD_LINE);
-			scanf("%s", info);
-			sprintf(elem, "%s %s %s %s", DELETE_CMD, info, FILE_TYPE, current_path);
-			printf("%s\n", elem);
+			fgets(info, 50, stdin);
+			getCmd(name, info);
+			sprintf(elem, "%s %s %s %s", DELETE_CMD, name, FILE_TYPE, current_path);
+			//printf("%s\n", elem);
 			sendToServer(elem);
 			wait_server=1;
 			//fflush(stdin);
 		}else if(strcmp(WRITE_FILE_CMD, cmd)==0){
 			//printf("Write file digitato\n");
 			printf("%sInserire il nome del file in cui scrivere: ", CMD_LINE);
-			scanf("%s", info);
+			//scanf("%s", info);
+			fgets(info, 50, stdin);
+			getCmd(name, info);
 			//fflush(stdin);
-			int inode=searchElement(info, current_path);
+			int inode=searchElement(name, current_path);
 			if(inode==0){
 				printf("Errore: il file cercato non è presente nella directory corrente\n");
 			}else{
-				char* filename=(char*)malloc(sizeof(char)*(strlen(current_path)+strlen(info)+2));
+				char* filename=(char*)malloc(sizeof(char)*(strlen(current_path)+strlen(name)+2));
 				strcpy(filename, current_path);
-				strcat(filename, info);
-				printf("%s\n", filename);
+				strcat(filename, name);
+				//printf("%s\n", filename);
 				int fd=open(filename, O_RDWR);
 				if(fd==-1) handle_error("Errore: impossibile aprire il file in scrittura\n");
 				printf("Apertura del file in corso...\n");
 				
 				printf("%sInserire da quale posizione si vuole iniziare la scrittura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
+				char el[64]={0};
 				int position;
-				scanf("%d", &position);
-				printf("position %d\n", position);
-				fflush(stdin);
-				while(position<0){
-					printf("Errore: impossibile inserire un valore negativo\n");
-					printf("%sInserire da quale posizione si vuole iniziare la scrittura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
-					scanf("%d", &position);
-					fflush(stdin);
+				//scanf("%d", &position);
+				fgets(el, 64, stdin);
+				if(el[0]==10){
+					fgets(el, 64, stdin);
 				}
+				//printf("%s\n", el);
+				char e[64]={0};
+				
+				getCmd(e, el);
+				//printf("e: ");
+				//for(int i=0; i<64; i++){
+				//	printf("%c", e[i]);
+				//}
+				//printf("\n");
+				position=strtol(e, NULL, 10);
+				//printf("position %d\n", position);
+				int a=isNumber(e);
+				//printf("a %d\n", a);
+				//fflush(stdin);
+				while(!a || position<0){
+					printf("Errore: impossibile effettuare il seeking del file\ncon il valore inserito in input\n");
+					memset(el, 0, 64);
+					memset(e, 0, 64);
+					printf("%sInserire da quale posizione si vuole iniziare la scrittura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
+					fgets(el, 64, stdin);
+					if(el[0]==10){
+						fgets(el, 64, stdin);
+					}
+					getCmd(e, el);
+					//printf("e: ");
+					//for(int i=0; i<64; i++){
+					//	printf("a %c", e[i]);
+					//}
+					//printf("\n");
+					position=strtol(e, NULL, 10);
+					a=isNumber(e);
+					//printf("a %d\n", a);
+				}
+				
 				if(position!=0){
 					ret=lseek(fd, position, SEEK_SET);
 					if(ret==-1){
@@ -177,17 +230,17 @@ int main(){
 				
 				char old_msg[1024]={0};
 				ret=1;
-				printf("Contenuto del file '%s':\n", info);
+				//printf("Contenuto del file '%s':\n", info);
 				while(ret!=0 && ret!=-1){
 					ret=read(fd, old_msg, 1024);
-					printf("elementi letti: %d\n", ret); 
+					//printf("elementi letti: %d\n", ret); 
 					//printf("errno %d\n", errno);
 					
 				}
 				if(ret==-1){
 					printf("Errore: impossibile leggere il contenuto del file\n");
 				}else{
-					printf("%s", old_msg);
+					//printf("%s", old_msg);
 				}
 				ret=close(fd);
 				if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor del file aperto in scrittura\n");
@@ -205,28 +258,33 @@ int main(){
 				if(ret==-1) printf("Errore: impossibile spostare la posizione del file\n");
 				printf("%sScrivere il contenuto da inserire nel file:\n", CMD_LINE);
 				char msg[1024]={0};
-				getchar();
+				//getchar();
 				fgets(msg, 1024, stdin);
+				//printf("Messaggio: ");
+				//for(int i=0; i<strlen(msg); i++){
+				//	printf("%c", msg[i]);
+				//}
+				//printf("\n");
 				int wf=write(fd, msg, strlen(msg));
-				printf("Scritto lunghezza: %d\nInserito lunghezzza: %ld\n", wf, strlen(msg));
+				//printf("Scritto lunghezza: %d\nInserito lunghezzza: %ld\n", wf, strlen(msg));
 				if(wf==-1){
 					printf("Errore: impossibile scrivere nel file\n");
 				}else{
 					printf("Scrittura avvenuta con successo\n");
 				}
 				wf=write(fd, old_msg, strlen(old_msg));
-				printf("Scritto lunghezza: %d\nInserito lunghezzza: %ld\n", wf, strlen(msg));
+				//printf("Scritto lunghezza: %d\nInserito lunghezzza: %ld\n", wf, strlen(msg));
 				if(wf==-1){
 					printf("Errore: impossibile scrivere nel file\n");
 				}else{
-					printf("Scrittura avvenuta con successo\n");
+					//printf("Scrittura avvenuta con successo\n");
 				}
 				ret=close(fd);
 				if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor del file aperto in scrittura\n");
 				free(filename);
 				memset(msg, 0, 1024);
 				memset(old_msg, 0, 1024);
-				fflush(stdin);
+				//fflush(stdin);
 			}
 		}else if(strcmp(READ_FILE_CMD, cmd)==0){
 			//printf("Read file digitato\n");
@@ -234,28 +292,58 @@ int main(){
 			scanf("%s", info);
 			//fflush(stdin);
 			int inode=searchElement(info, current_path);
-			fflush(stdin);
+			//fflush(stdin);
 			if(inode==0){
 				printf("Errore: il file cercato non è presente nella directory corrente\n");
 			}else{
 				char* filename=(char*)malloc(sizeof(char)*(strlen(current_path)+strlen(info)+2));
 				strcpy(filename, current_path);
 				strcat(filename, info);
-				printf("%s\n", filename);
+				//printf("%s\n", filename);
 				int fd=open(filename, O_RDWR);
 				if(fd==-1) handle_error("Errore: impossibile aprire il file in lettura\n");
 				printf("Apertura del file in corso...\n");
 				
 				printf("%sInserire da quale posizione si vuole iniziare la lettura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
-				int position=0;
-				scanf("%d", &position);
-				printf("position %d\n", position);
-				fflush(stdin);
-				while(position<0){
-					printf("Errore: impossibile inserire un valore negativo\n");
+				char el[64]={0};
+				int position;
+				//scanf("%d", &position);
+				fgets(el, 64, stdin);
+				if(el[0]==10){
+					fgets(el, 64, stdin);
+				}
+				//printf("%s\n", el);
+				char e[64]={0};
+				
+				getCmd(e, el);
+				//printf("e: ");
+				//for(int i=0; i<64; i++){
+				//	printf("%c", e[i]);
+				//}
+				//printf("\n");
+				position=strtol(e, NULL, 10);
+				//printf("position %d\n", position);
+				int a=isNumber(e);
+				//printf("a %d\n", a);
+				//fflush(stdin);
+				while(!a || position<0){
+					printf("Errore: impossibile effettuare il seeking del file\ncon il valore inserito in input\n");
+					memset(el, 0, 64);
+					memset(e, 0, 64);
 					printf("%sInserire da quale posizione si vuole iniziare la lettura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
-					scanf("%d", &position);
-					fflush(stdin);
+					fgets(el, 64, stdin);
+					if(el[0]==10){
+						fgets(el, 64, stdin);
+					}
+					getCmd(e, el);
+				//	printf("e: ");
+				//	for(int i=0; i<64; i++){
+				//		printf("a %c", e[i]);
+				//	}
+				//	printf("\n");
+					position=strtol(e, NULL, 10);
+					a=isNumber(e);
+				//	printf("a %d\n", a);
 				}
 				if(position!=0){
 					ret=lseek(fd, position, SEEK_SET);
@@ -269,7 +357,7 @@ int main(){
 				printf("Contenuto del file '%s':\n", info);
 				while(ret!=0 && ret!=-1){
 					ret=read(fd, msg, 1024);
-					printf("elementi letti: %d\n", ret); 
+					//printf("elementi letti: %d\n", ret); 
 					//printf("errno %d\n", errno);
 					
 				}
@@ -286,18 +374,20 @@ int main(){
 		}else if(strcmp(SEEK_FILE_CMD, cmd)==0){
 			//printf("Seek file digitato\n");
 			printf("Prima di eseguire la lettura o la scrittura di un file è possibile spostare la \nposizione corrente del file stesso, in modo tale che tali operazioni possano \navvenire nel punto desiderato\n");
-			printf("NB: se non si vuole specificare il punto in cui iniziare a leggere o \nscrivere un file, le operazioni saranno eseguite dall'inizio del file\n");
+			printf("NB: è obbligatorio inserire un valore\n");
 		}else if(strcmp(CREATE_DIRECTORY_CMD, cmd)==0){//GESTIRE IL PERCORSO E INODE PADRE
-			printf("%sInserire il nome della directory da creare: ", CMD_LINE);
-			scanf("%s", info);
-			sprintf(elem, "%s %s %s %s %s %d", CREAT_CMD, info, DIR_TYPE, user, current_path, fat_padre->inode);
+			printf("%sInserire il nome della directory da creare senza spazi: ", CMD_LINE);
+			fgets(info, 50, stdin);
+			getCmd(name, info);
+			sprintf(elem, "%s %s %s %s %s %d", CREAT_CMD, name, DIR_TYPE, user, current_path, fat_padre->inode);
 			sendToServer(elem);
 			wait_server=1;
 			//fflush(stdin);
 		}else if(strcmp(ERASE_DIRECTORY_CMD, cmd)==0){//GESTIRE LA POSIZIONE
 			printf("%sInserire il nome della directory da eliminare: ", CMD_LINE);
-			scanf("%s", info);
-			sprintf(elem, "%s %s %s %s", DELETE_CMD, info, DIR_TYPE, current_path);
+			fgets(info, 50, stdin);
+			getCmd(name, info);
+			sprintf(elem, "%s %s %s %s", DELETE_CMD, name, DIR_TYPE, current_path);
 			//fflush(stdin);
 			char risposta[1]={0};
 			printf("%sEliminando la directory '%s' eliminerai tutto il suo contenuto.\nProseguire?[S/n]: ", CMD_LINE, info);
@@ -308,20 +398,20 @@ int main(){
 				wait_server=1;
 			}else{
 				printf("Selezionato no o carattere diverso\n");
-				fflush(stdin);
+				//fflush(stdin);
 			}
 		}else if(strcmp(CHANGE_DIRECTORY_CMD, cmd)==0){
 			//printf("Change directory digitato\n");
 			printf("%sInserire il nome della directory in cui spostarsi: ", CMD_LINE);
 			scanf("%s", info);
-			fflush(stdin);
+			//fflush(stdin);
 			if(strcmp(MOVE_FATHER, info)==0){
 				if(strcmp(FILE_SYSTEM_DIRECTORY, fat_padre->name)==0){
 					printf("Errore: impossibile spostarsi nella direcotry padre di %s\n", FILE_SYSTEM_DIRECTORY);
 				}else{
 					int padre=fat_padre->inode_padre;
 					fat_padre->inode=array_fat[padre]->inode;
-					fat_padre->size=array_fat[padre]->size;
+					//fat_padre->size=array_fat[padre]->size;
 					fat_padre->inode_padre=array_fat[padre]->inode_padre;
 					strcpy(fat_padre->name, array_fat[padre]->name);
 					strcpy(fat_padre->path, array_fat[padre]->path);
@@ -342,7 +432,7 @@ int main(){
 				}
 				if(trovato){
 					fat_padre->inode=array_fat[inode]->inode;
-					fat_padre->size=array_fat[inode]->size;
+					//fat_padre->size=array_fat[inode]->size;
 					fat_padre->inode_padre=array_fat[inode]->inode_padre;
 					strcpy(fat_padre->name, array_fat[inode]->name);
 					strcpy(fat_padre->path, array_fat[inode]->path);
@@ -357,11 +447,12 @@ int main(){
 		}else if(strcmp(LIST_DIRECTORY_CMD, cmd)==0){
 			//printf("List directory digitato\n");
 			printf("Directory corrente: %s%s/\n", fat_padre->path, fat_padre->name);
-			printf("Nome\tTipo\n");
+			printf("Nome\t\tTipo\n");
 			for(int i=0; i<MAX_INODE; i++){
 				if(array_fat[i]!=NULL){
+					//printf("inode %d padre %d", array_fat[i]->inode_padre, fat_padre->inode);
 					if(array_fat[i]->inode_padre==fat_padre->inode){
-						printf("%s\t%s\n", array_fat[i]->name, array_fat[i]->type);
+						printf("%s\t\t%s\n", array_fat[i]->name, array_fat[i]->type);
 					}
 				}
 			}
@@ -393,14 +484,17 @@ int main(){
 			if(ret==-1) handle_error("Errore: sem_post shmem\n");
 			ret=sem_post(server);
 			if(ret==-1) handle_error("Errore: sem_post main	\n");
-			stampaArray();
+			//stampaArray();
 		}
 		//while(getchar()!='\n');
+		//memset(row, 0, 50);
+		//row={0};
 		memset(cmd, 0, 50);
 		memset(info, 0, 50);
+		memset(name, 0, 50);
 		memset(elem, 0, 100);
-		fflush(stdin);
-		fflush(stdout);
+		//fflush(stdin);
+		//fflush(stdout);
 	}
 	ret=sem_close(server);
 	if(ret==-1) handle_error("Errore: sem_close server\n");
@@ -418,6 +512,7 @@ int main(){
 	free(array_fat);
 	free(fat_padre);
 	free(current_path);
+	//free(cmd);
 	
 	ret=unlink(FIFO_FOR_RES);
 	if(ret==-1) handle_error("Errore: impossibile eliminare il canale di comunicazione\n");
