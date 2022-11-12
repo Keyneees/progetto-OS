@@ -146,6 +146,13 @@ int main(){
 			getCmd(name, info);
 			//fflush(stdin);
 			//printf("%s\n", name);
+			while(name[0]==0){
+				memset(info, 0, 50);
+				memset(name, 0, 50);
+				printf("%sInserire il nome del file da creare senza spazi: ", CMD_LINE);
+				fgets(info, 50, stdin);
+				getCmd(name, info);
+			}
 			sprintf(elem, "%s %s %s %s %s %d", CREAT_CMD, name, FILE_TYPE, user, current_path, fat_padre->inode);
 			//printf("Stringa mandata %s\n", elem);
 			sendToServer(elem);
@@ -155,6 +162,13 @@ int main(){
 			printf("%sInserire il nome del file da eliminare: ", CMD_LINE);
 			fgets(info, 50, stdin);
 			getCmd(name, info);
+			while(name[0]==0){
+				memset(info, 0, 50);
+				memset(name, 0, 50);
+				printf("%sInserire il nome del file da eliminare: ", CMD_LINE);
+				fgets(info, 50, stdin);
+				getCmd(name, info);
+			}
 			sprintf(elem, "%s %s %s %s", DELETE_CMD, name, FILE_TYPE, current_path);
 			//printf("%s\n", elem);
 			sendToServer(elem);
@@ -379,6 +393,13 @@ int main(){
 			printf("%sInserire il nome della directory da creare senza spazi: ", CMD_LINE);
 			fgets(info, 50, stdin);
 			getCmd(name, info);
+			while(name[0]==0){
+				memset(info, 0, 50);
+				memset(name, 0, 50);
+				printf("%sInserire il nome della directory da creare senza spazi: ", CMD_LINE);
+				fgets(info, 50, stdin);
+				getCmd(name, info);
+			}
 			sprintf(elem, "%s %s %s %s %s %d", CREAT_CMD, name, DIR_TYPE, user, current_path, fat_padre->inode);
 			sendToServer(elem);
 			wait_server=1;
@@ -387,11 +408,27 @@ int main(){
 			printf("%sInserire il nome della directory da eliminare: ", CMD_LINE);
 			fgets(info, 50, stdin);
 			getCmd(name, info);
+			while(name[0]==0){
+				memset(info, 0, 50);
+				memset(name, 0, 50);
+				printf("%sInserire il nome della directory da eliminare: ", CMD_LINE);
+				fgets(info, 50, stdin);
+				getCmd(name, info);
+			}
 			sprintf(elem, "%s %s %s %s", DELETE_CMD, name, DIR_TYPE, current_path);
 			//fflush(stdin);
-			char risposta[1]={0};
-			printf("%sEliminando la directory '%s' eliminerai tutto il suo contenuto.\nProseguire?[S/n]: ", CMD_LINE, info);
-			scanf("%s", risposta);
+			char risposta[50]={0};
+			printf("%sEliminando la directory '%s' eliminerai tutto il suo contenuto.\nProseguire?[S/n]:", CMD_LINE, name);
+			memset(info, 0, 50);
+			fgets(info, 50, stdin);
+			getCmd(risposta, info);
+			while(risposta[0]==0){
+				memset(info, 0, 50);
+				memset(risposta, 0, 50);
+				printf("Proseguire?[S/n]:");
+				fgets(info, 50, stdin);
+				getCmd(risposta, info);
+			}
 			if(strcmp(risposta,"S")==0){
 				printf("Selezionato si\n");
 				sendToServer(elem);
