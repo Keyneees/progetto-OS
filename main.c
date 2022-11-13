@@ -43,18 +43,40 @@ int main(){
 	printf("%sInserire il nome per il login: ", CMD_LINE);
 	fgets(user, 30, stdin);
 	for(int i=0; i<30; i++){
-		if(user[i]==10){
+		if(user[i]==10 || user[i]=='\n'){
 			user[i]='\0';
 		}
 	}
-	while(strcmp(GENERIC_CREATOR, user)==0){
-		printf("Errore: non è possibile usare il nome %s. Si prega di inserire un nome diverso\n", user);
+	while(user[0]==0 || user[0]==10){
+		memset(user, 0, 30);
 		printf("%sInserire il nome per il login: ", CMD_LINE);
-		//scanf("%s", user);
 		fgets(user, 30, stdin);
 		for(int i=0; i<30; i++){
-			if(user[i]==10){
+			if(user[i]==10 || user[i]=='\n'){
 				user[i]='\0';
+			}
+		}
+	}
+	
+	while(strcmp(GENERIC_CREATOR, user)==0){
+		printf("Errore: non è possibile usare il nome %s.\nSi prega di inserire un nome diverso\n", user);
+		printf("%sInserire il nome per il login: ", CMD_LINE);
+		//scanf("%s", user);
+		memset(user, 0, 30);
+		fgets(user, 30, stdin);
+		for(int i=0; i<30; i++){
+			if(user[i]==10 || user[i]=='\n'){
+				user[i]='\0';
+			}
+		}
+		while(user[0]==0 || user[0]==10){
+			memset(user, 0, 30);
+			printf("%sInserire il nome per il login: ", CMD_LINE);
+			fgets(user, 30, stdin);
+			for(int i=0; i<30; i++){
+				if(user[i]==10 || user[i]=='\n'){
+					user[i]='\0';
+				}
 			}
 		}
 	}
