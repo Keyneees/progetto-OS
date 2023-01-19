@@ -28,7 +28,6 @@ struct fat{
 	char name[64];
 	char path[64];
 	char type[64];
-	//int size; //DA VALUTARE
 	int inode_padre;
 	char creator[64];
 };

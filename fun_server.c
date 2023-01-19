@@ -16,7 +16,6 @@
 
 //FUNZONI PER I FILE
 void createFile(int inode, char* filename, char* type, char* creator, char* path, int inode_padre){
-	//int ret;
 	char res[128]={0};
 	memset(res, 0, 128);
 	if(next_inode<MAX_INODE){
@@ -44,15 +43,9 @@ void createFile(int inode, char* filename, char* type, char* creator, char* path
 			printf("Creazione della struttura\n");
 			array_fat[next_inode]=(struct fat*)calloc(1, sizeof(struct fat));
 			array_fat[next_inode]->inode=next_inode;
-			//array_fat[next_inode]->name=(char*)malloc(sizeof(char)*strlen(filename));
 			strcpy(array_fat[next_inode]->name, filename);
-			//array_fat[next_inode]->path=(char*)malloc(sizeof(char)*strlen(creator));
 			strcpy(array_fat[next_inode]->path, path);
-			//array_fat[next_inode]->type=(char*)malloc(sizeof(char));
 			strcpy(array_fat[next_inode]->type, type);
-			//array_fat[next_inode]->type=type;
-			//array_fat[next_inode]->size=0;
-			//array_fat[next_inode]->creator=(char*)malloc(sizeof(char)*strlen(creator));
 			strcpy(array_fat[next_inode]->creator, creator);
 			array_fat[next_inode]->inode_padre=inode_padre;
 			sprintf(res, "Elemento creato con successo");
@@ -84,18 +77,8 @@ void eraseFile(int inode){
 	if(ret==-1){
 		printf("Il file %s non esiste nella directory corrente\n", filename);
 	}else{
-		/*free(array_fat[inode]->name);
-		free(array_fat[inode]->path);
-		free(array_fat[inode]->type);
-		free(array_fat[inode]->creator);*/
 		free(array_fat[inode]);
 		array_fat[inode]=NULL;
-		
-		/*char elem[100];
-		printf("Preparo la stringa\n");
-		sprintf(elem, "%s %d\n", DELETE_CMD, inode);
-		printf("Stringa: %s\n", elem);
-		sendToServer(elem);*/
 		char in[10]={0};
 		sprintf(in, "%d\n", inode);
 		insertInFatFile(in, inode);
@@ -116,8 +99,6 @@ void createDirectory(int inode, char* directoryname, char* type, char* creator, 
 			strcpy(location, path);
 			strcat(location, directoryname);
 		}
-		//printf("Elementi dati -> path %s, nome %s", path, directoryname);
-		//printf("Location calcolata %s\n", location);
 		int fddir=mkdir(location, PERMESSI_DIRECTORY);
 		free(location);
 		if(fddir==-1){
@@ -133,15 +114,9 @@ void createDirectory(int inode, char* directoryname, char* type, char* creator, 
 			printf("Creazione della struttura\n");
 			array_fat[next_inode]=(struct fat*)calloc(1, sizeof(struct fat));
 			array_fat[next_inode]->inode=inode;
-			//array_fat[next_inode]->name=(char*)malloc(sizeof(char)*strlen(directoryname));
 			strcpy(array_fat[next_inode]->name, directoryname);
-			//array_fat[next_inode]->path=(char*)malloc(sizeof(char)*strlen(current_path));
 			strcpy(array_fat[next_inode]->path, path);
-			//array_fat[next_inode]->type=(char*)malloc(sizeof(char));
 			strcpy(array_fat[next_inode]->type, type);
-			//array_fat[next_inode]->type=type;
-			//array_fat[next_inode]->size=0;
-			//array_fat[next_inode]->creator=(char*)malloc(sizeof(char)*strlen(creator));
 			strcpy(array_fat[next_inode]->creator, creator);
 			array_fat[next_inode]->inode_padre=inode_padre;
 			sprintf(res, "Elemento creato con successo");
@@ -157,7 +132,6 @@ void createDirectory(int inode, char* directoryname, char* type, char* creator, 
 		
 	}
 	if(strcmp(creator, GENERIC_CREATOR)!=0){
-		//sleep(3);
 		printf("Messaggio mandato al server: %s\n", res);
 		sendResult(res);
 	}
@@ -173,19 +147,8 @@ void eraseDirectory(int inode){
 	if(ret==-1){
 		printf("La directory %s non esiste nella directory corrente\n", directoryname);
 	}else{
-		
-		/*free(array_fat[inode]->name);
-		free(array_fat[inode]->path);
-		free(array_fat[inode]->type);
-		free(array_fat[inode]->creator);*/
 		free(array_fat[inode]);
 		array_fat[inode]=NULL;
-		
-		/*char elem[100];
-		printf("Preparo la stringa\n");
-		sprintf(elem, "%s %d\n", DELETE_CMD, inode);
-		printf("Stringa: %s\n", elem);
-		sendToServer(elem);*/
 		char in[10]={0};
 		sprintf(in, "%d\n", inode);
 		insertInFatFile(in, inode);
@@ -193,36 +156,6 @@ void eraseDirectory(int inode){
 	free(directoryname);
 }
 
-
-
-//FUNZIONI EXTRA
-
-/*void sizeUpdate(int inode){
-	if(inode>=0 && inode<MAX_INODE){
-		struct stat s;
-		char* filename=array_fat[inode]->name;
-		printf("Pronto ad aggiornare la size del file %s\n", filename);
-		int ret=stat(filename, &s);
-		printf("Fatto...");
-		printf("Dimensione dell'elemento di inode %d: %ld\n", inode, s.st_size);
-		array_fat[inode]->size=s.st_size;
-		
-		if(strcmp(array_fat[inode]->creator,GENERIC_CREATOR)){
-			char elem[100];
-			sprintf(elem, "%s %d %s %s %s %s %d %d\n", UPDATE_CMD, inode, array_fat[inode]->name, 
-			array_fat[inode]->path, array_fat[inode]->type, array_fat[inode]->creator, array_fat[inode]->size, 
-			array_fat[inode]->inode_padre);
-			sendToServer(elem);
-		}else{
-			char elem[sizeof(struct fat)+64]={0};
-			sprintf(elem, "%d %s %s %s %s %d %d\n", inode, array_fat[inode]->name, 
-			array_fat[inode]->path, array_fat[inode]->type, array_fat[inode]->creator, array_fat[inode]->size, 
-			array_fat[inode]->inode_padre);
-			insertInFatFile(elem, inode);
-		}
-		sizeUpdate(array_fat[inode]->inode_padre);
-	}
-}*/
 
 void removeChild(int inode){
 	for(int i=0; i<MAX_INODE; i++){
@@ -234,16 +167,10 @@ void removeChild(int inode){
 				}else{
 					eraseFile(i);
 				}
-				//free(array_fat[inode]);
-				//array_fat[inode]=NULL;
 			}
 		}
 	}
 }
-
-
-
-
 
 void nextInode(){  //DA RIVEDERE
 	int trovato=0;
@@ -316,26 +243,17 @@ void loadFAT(){
 		token=strtok(NULL, SEPARATOR);
 		if(token!=NULL){			
 			char* nome=token;
-			//printf("%s\n", nome);
 			char* path=strtok(NULL, SEPARATOR);
 			char* tipo=strtok(NULL, SEPARATOR);
 			char* creatore=strtok(NULL, SEPARATOR);
-			//int size=strtol(strtok(NULL, SEPARATOR), NULL, 10);
 			int padre=strtol(strtok(NULL, SEPARATOR), NULL, 10);
 			array_fat[i]=(struct fat*)calloc(1, sizeof(struct fat));
 			array_fat[i]->inode=i;
-			//array_fat[i]->name=(char*)malloc(sizeof(char)*strlen(nome));
 			strcpy(array_fat[i]->name, nome);
-			//array_fat[i]->path=(char*)malloc(sizeof(char)*strlen(path));
 			strcpy(array_fat[i]->path, path);
-			//array_fat[i]->type=(char*)malloc(sizeof(char)*strlen(tipo)); 
 			strcpy(array_fat[i]->type, tipo);
-			//array_fat[i]->type=tipo;
-			//array_fat[i]->size=size;//DA RIVEDERE
-			//array_fat[i]->creator=(char*)malloc(sizeof(char)*strlen(creatore));
 			strcpy(array_fat[i]->creator, creatore);
 			array_fat[i]->inode_padre=padre;
-			//printf("Inode %d, creator %s, nome %s, percorso %s, tipo %s\n", array_fat[i]->inode, array_fat[i]->creator, array_fat[i]->name, array_fat[i]->path, array_fat[i]->type);
 		}else{
 			array_fat[i]=NULL;
 		}
@@ -344,45 +262,20 @@ void loadFAT(){
 	if(ret==-1) handle_error("Errore: impossibile chiudere FAT.txt\n");
 }
 
+//CONDIVISIONE DELL'ARRAY DI ELEMENTI
 void sharing_father(){
-	//CONDIVISIONE DI UN ELEMENTO SINGOLO
-	/*int size=sizeof(struct fat)+sizeof(char)*256;
-	int fd=shm_open(SHMEM_FOR_INFO, O_CREAT|O_RDWR, 0666);
-	if(fd==-1) handle_error("Errore: impossibile creare la zona di memoria condivisa\n");
-	int ret=ftruncate(fd, size);
-	if(ret==-1) handle_error("Errore: impossibile impostare una dimensione della zona di memoria condivisa\n");
-	struct fat* shared=(struct fat*)mmap(0, size, PROT_WRITE, MAP_SHARED, fd, 0);
-	if(shared==MAP_FAILED) handle_error("Errore: impossibile mappa la zona di memoria condivisa\n");
-	printf("Elemento caricato\n");
-	memcpy(shared, array_fat[1], size);
-	strcpy(shared->name, array_fat[1]->name);
-	strcpy(shared->path, array_fat[1]->path);
-	strcpy(shared->type, array_fat[1]->type);
-	strcpy(shared->creator, array_fat[1]->creator);
-	printf("Inode padre %d\n", shared->inode);
-	printf("Nome padre %s\n", shared->name);
-	printf("Path padre %s\n", shared->path);
-	printf("Type padre %s\n", shared->type);
-	printf("Creator padre %s\n", shared->creator);
-	ret=close(fd);
-	if(ret==-1) handle_error("Errore: impossibile chiudere il file descriptor della memoria condivisa");	*/
-	
-	
-	//CONDIVISIONE DELL'ARRAY DI ELEMENTI
 	int size=sizeof(struct fat)*MAX_INODE;
 	int id=shmget(12345, size, IPC_CREAT | 0666);
 	if(id==-1) handle_error("Error shmid\n");
 	struct fat* shmem;
 	shmem=(struct fat*)shmat(id, 0, 0);
 	for(int i=0; i<MAX_INODE; i++){
-		//shmem[i]=(struct fat*)malloc(sizeof(struct fat));
 		if(array_fat[i]!=NULL){
 			shmem[i].inode=array_fat[i]->inode;
 			strcpy(shmem[i].name, array_fat[i]->name);
 			strcpy(shmem[i].path, array_fat[i]->path);
 			strcpy(shmem[i].creator, array_fat[i]->creator);
 			strcpy(shmem[i].type, array_fat[i]->type);
-			//shmem[i].size=array_fat[i]->size;
 			shmem[i].inode_padre=array_fat[i]->inode_padre;
 		}else{
 			shmem[i].inode=INODE_LIMIT;
@@ -390,17 +283,10 @@ void sharing_father(){
 			strcpy(shmem[i].path, "");
 			strcpy(shmem[i].creator, "");
 			strcpy(shmem[i].type, "");
-			//shmem[i].size=0;
 			shmem[i].inode_padre=0;
 		}
 	}
-	/*printf("Shmem:\n");
-	for(int i=0; i<MAX_INODE; i++){
-			printf("Inode %d, size %d, creator %s, nome %s, percorso %s, tipo %s, inode_padre %d\n", shmem[i].inode, shmem[i].size, shmem[i].creator,
-			shmem[i].name, shmem[i].path, shmem[i].type, shmem[i].inode_padre);
-	}*/
 	shmdt((void *)shmem);
-	//printf("Fine shmem\n");
 }
 
 void stampaArray(){
@@ -408,8 +294,6 @@ void stampaArray(){
 	for(int i=0; i<MAX_INODE; i++){
 		if(array_fat[i]!=NULL){
 			printf("Inode %d, creator %s, nome %s,\npercorso %s, tipo %s, inode padre %d\n\n", array_fat[i]->inode, array_fat[i]->creator, array_fat[i]->name, array_fat[i]->path, array_fat[i]->type, array_fat[i]->inode_padre);
-		}else{
-			//printf("Inode %d, NULL\n", i);
 		}
 	}
 }
@@ -418,19 +302,13 @@ int searchElement(char* name, char* path, char type){
 	printf("Ricerca dell'elemento...");
 	int inode;
 	int trovato=0;
-	//printf("Nome: %s\nPath: %s\n", name, path);
 	for(int i=0; i<MAX_INODE && !trovato; i++){
 		if(array_fat[i]!=NULL){
 			if(strcmp(array_fat[i]->name, name)==0 && strcmp(array_fat[i]->path, path)==0 && array_fat[i]->type[0]==type){
-				//printf("Elemento trovato\n");
 				inode=i;
 				trovato=1;
-			}else{
-				//printf("%d: Elemento con nome o percorso diverso\n", i);
 			}
 			printf("%c %c\n", array_fat[i]->type[0], type);
-		}else{
-			//printf("%d: Elemento assente\n", i);
 		}
 	}
 	if(trovato){
@@ -453,7 +331,6 @@ void sendResult(char* res){
 	printf("Inviando '%s' all'utente...\n", res);
 	while(send_bytes<size_elem){
 		ret=write(fdfifo, res+send_bytes, size_elem-send_bytes);
-		//printf("%d\n", ret);
 		if(ret==-1){
 			if(errno==EINTR){
 				continue;
@@ -464,7 +341,6 @@ void sendResult(char* res){
 			send_bytes+=ret;
 		}
 	}
-	//printf("%s\n", res);
 	ret=close(fdfifo);
 	if(ret==-1) handle_error("Errore: impossibile chiudere il canale di comunicazione\n");
 }

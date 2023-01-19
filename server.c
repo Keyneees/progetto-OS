@@ -14,34 +14,24 @@
 
 int main(){
 	array_fat=(struct fat**)calloc(MAX_INODE, sizeof(struct fat*));
-	
 	inode_fat=0;
 	inode_dir=1;
-	
 	sem_unlink(SEM_SERVER);
-	//server=NULL;
-	//memset(&server, 0, sizeof(sem_t));
-	/**server=0;*/
 	server=sem_open(SEM_SERVER, O_CREAT | O_EXCL, 0666, 1);
 	if(server==SEM_FAILED) handle_error("Errore: impossibile avviare sem_server\n");
-	
 	sem_unlink(SEM_MAIN);
 	main_s=NULL;
 	main_s=sem_open(SEM_MAIN, O_CREAT | O_EXCL, 0666, 0);
 	if(main_s==SEM_FAILED) handle_error("Errore: impossibile avviare sem_main\n");
-	
 	sem_unlink(SEM_SHMEM);
 	shmem=NULL;
 	shmem=sem_open(SEM_SHMEM, O_CREAT | O_EXCL, 0666, 1);
 	if(shmem==SEM_FAILED) handle_error("Errore: impossibile avviare sem_shmem\n");
-	
 	int ret;
 	current_path="/";
 	FILE* exist=fopen(FAT_FILE_NAME, "r");
 	if(exist==NULL){
-		//printf("Il file non esiste\n");
 		createFile(0, FAT_FILE_NAME, FILE_TYPE, GENERIC_CREATOR, "/", SERVER_FATHER);
-		
 		fdfat=open(FAT_FILE_NAME, O_RDWR);
 		if(fdfat==-1) handle_error("Errore: impossibile aprire il FAT.txt\n");
 		for(int i=0; i<MAX_INODE; i++){
@@ -49,37 +39,25 @@ int main(){
 			sprintf(buffer, "%d\n", i);
 			write(fdfat, buffer, strlen(buffer));
 		}
-		//inode_fat=next_inode;
 		ret=close(fdfat);
 		if(ret==-1) handle_error("Errore: impossibile chiudere il FAT.txt\n");
 		//INSERIRE FILE E DIRECTORY SUL FAT.txt
 		char row[100];
 		sprintf(row, "%d %s %s %s %s %d %d\n", next_inode, FAT_FILE_NAME, current_path, FILE_TYPE, GENERIC_CREATOR, 0, SERVER_FATHER);
-		//printf("row calcolata %s", row);
 		insertInFatFile(row, next_inode);
-		
 		nextInode();
 		createDirectory(next_inode, FILE_SYSTEM_DIRECTORY, DIR_TYPE, GENERIC_CREATOR, "/", SERVER_FATHER);
 		//INSERIRE FILE E DIRECTORY SUL FAT.txt
 		sprintf(row, "%d %s %s %s %s %d %d\n", next_inode, FILE_SYSTEM_DIRECTORY, current_path, DIR_TYPE, GENERIC_CREATOR, 0, SERVER_FATHER);
 		insertInFatFile(row, next_inode);
-		//inode_dir=next_inode;
-		//sizeUpdate(inode_fat);
-		//nextInode();
 	}else{
-		//printf("Il file esiste\n");
 		//CARICARE LA STRUTTURA CHE TIENE MEMORIA DEI FILE E DELLE DIRECTORY CREATE
 		loadFAT();
-		//printf("Closing file\n");
 		fclose(exist);
-		//printf("File close\n");
 	}
 	stampaArray();
 	nextInode();
-	//printf("Array stampato\n");
-	//printf("Caricamento inode padre...");
 	sharing_father();
-	//printf(" Effettuato\n");
 	printf("Server pronto all'avvio\n");
 	current_path=*FILE_SYSTEM_DIRECTORY+"/";
 	unlink(FIFO_FOR_FAT);
@@ -89,10 +67,8 @@ int main(){
 		printf("In attesa dei comandi degli utenti...\n");
 		ret=mkfifo(FIFO_FOR_FAT, 0666);
 		if(ret==-1) handle_error("Errore: impossibile creare la fifo per ricevere istruzioni dagli utenti\n");
-		
 		int fdfifo=open(FIFO_FOR_FAT, O_RDONLY);
 		if(fdfifo==-1) handle_error("Errore: impossibile aprire la fifo per comunicare con gli utenti\n");
-		
 		int bytes_read=0;
 		while(1){
 			ret=read(fdfifo, buf+bytes_read, 100);
@@ -113,10 +89,8 @@ int main(){
 		if(ret==-1) handle_error("Errore: impossibile chiudere il descrittore della fifo\n");
 		ret=unlink(FIFO_FOR_FAT);
 		if(ret==-1) handle_error("Errore: impossibile eliminare la fifo\n");
-		
 		char* elem=strtok(buf, SEPARATOR);
 		printf("Primo elemento ricevuto %s\n", elem);
-		
 		if(strcmp(elem, CREAT_CMD)==0){
 			//CREAZIONE
 			printf("GESTIONE CREAZIONE DELLA RIGA\n");
@@ -130,8 +104,6 @@ int main(){
 			}else{
 				createFile(next_inode, nome, type, creator, path, inode_padre);
 			}
-			//sizeUpdate(inode_fat);
-			//sizeUpdate(inode_dir);
 			send=1;
 			nextInode();
 		}else if(strcmp(elem, DELETE_CMD)==0){
@@ -150,7 +122,6 @@ int main(){
 					eraseFile(inode);
 				}
 				sendResult("Cancellazione avvenuta con successo");
-				//sizeUpdate(inode_fat);
 				nextInode(fdfat);
 			}else{
 				sendResult("Impossibile eliminare il file o la directory");
@@ -163,14 +134,7 @@ int main(){
 		}else if(strcmp(elem, CLOSE_CMD)==0){
 			printf("Chiusura in corso...\n");
 			loop=0;
-		}/*else{
-			//GESTIONE INSERIMENTO DELLA RIGA
-			int inode=strtol(elem, NULL, 10);
-			insertInFatFile(buf, inode);
-			sizeUpdate(inode_fat);
-			nextInode(fdfat);
-		}*/
-		
+		}
 		if(send){
 			send=0;
 			ret=sem_wait(server);
@@ -183,25 +147,21 @@ int main(){
 			ret=sem_post(main_s);
 			if(ret==-1) handle_error("Errore: sem_post main	\n");
 		}
-		
 		memset(buf, 0, 100);
 		stampaArray();
 	}
-	
 	ret=sem_close(server);
 	if(ret==-1) handle_error("Errore: sem_close server\n");
 	ret=sem_close(shmem);
 	if(ret==-1) handle_error("Errore: sem_close shmem\n");
 	ret=sem_close(main_s);
 	if(ret==-1) handle_error("Errore: sem_close main\n");
-	
 	ret=sem_unlink(SEM_SERVER);
 	if(ret==-1) handle_error("Errore: sem_destroy server\n");
 	ret=sem_unlink(SEM_MAIN);
 	if(ret==-1) handle_error("Errore: sem_destroy shmem\n");
 	ret=sem_unlink(SEM_SHMEM);
 	if(ret==-1) handle_error("Errore: sem_destroy main\n");
-	
 	for(int i=0; i<MAX_INODE; i++){
 		if(array_fat[i]!=NULL){
 			free(array_fat[i]);

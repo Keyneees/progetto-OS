@@ -29,7 +29,6 @@ void waitResult();
 void stampaArray(); //DA CANCELLARE
 void currentPath();
 int searchElement(char* name, char* path);
-//int compareArrayString(char elem[64], char* cmp);
 void copyArrayString(char elem[64], char copy[64]);
 void getCmd(char dest[50], char src[50]);
 int compareArrayString(char elem[64], char copy[64]);
