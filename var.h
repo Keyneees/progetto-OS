@@ -12,7 +12,6 @@
 
 #define CREAT_CMD "creat"
 #define DELETE_CMD "delete"
-#define UPDATE_CMD "update"
 #define CLOSE_CMD "close"
 
 #define INODE_LIMIT 999

@@ -127,10 +127,6 @@ int main(){
 				sendResult("Impossibile eliminare il file o la directory");
 			}
 			send=1;
-		}else if(strcmp(elem, UPDATE_CMD)==0){
-			//GESTIONE AGGIORNAMENTO DIMESIONE DI UNA RIGA DEL FILE FAT.txt
-			int inode=strtol(strtok(NULL, SEPARATOR), NULL, 10);
-			insertInFatFile(buf, inode);
 		}else if(strcmp(elem, CLOSE_CMD)==0){
 			printf("Chiusura in corso...\n");
 			loop=0;
