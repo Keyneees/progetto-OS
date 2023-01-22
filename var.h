@@ -20,6 +20,9 @@
 #define SEM_MAIN "/main\0"
 #define SEM_SHMEM "/shmem\0"
 
+#define COLOR_BOLD "\e[1m"
+#define COLOR_OFF "\e[m"
+
 #include <semaphore.h>
 
 struct fat{

@@ -28,7 +28,7 @@ int main(){
 	for(int i=0; i<MAX_INODE; i++){
 		array_fat[i]=NULL;
 	}
-	printf("%sInserire il nome per il login: ", CMD_LINE);
+	printf("%s%s%sInserire il nome per il login: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 	fgets(user, 30, stdin);
 	for(int i=0; i<30; i++){
 		if(user[i]==10 || user[i]=='\n'){
@@ -37,7 +37,7 @@ int main(){
 	}
 	while(user[0]==0 || user[0]==10){
 		memset(user, 0, 30);
-		printf("%sInserire il nome per il login: ", CMD_LINE);
+		printf("%s%s%sInserire il nome per il login: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 		fgets(user, 30, stdin);
 		for(int i=0; i<30; i++){
 			if(user[i]==10 || user[i]=='\n'){
@@ -47,7 +47,7 @@ int main(){
 	}
 	while(strcmp(GENERIC_CREATOR, user)==0){
 		printf("Errore: non è possibile usare il nome %s.\nSi prega di inserire un nome diverso\n", user);
-		printf("%sInserire il nome per il login: ", CMD_LINE);
+		printf("%s%s%sInserire il nome per il login: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 		memset(user, 0, 30);
 		fgets(user, 30, stdin);
 		for(int i=0; i<30; i++){
@@ -57,7 +57,7 @@ int main(){
 		}
 		while(user[0]==0 || user[0]==10){
 			memset(user, 0, 30);
-			printf("%sInserire il nome per il login: ", CMD_LINE);
+			printf("%s%s%sInserire il nome per il login: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 			fgets(user, 30, stdin);
 			for(int i=0; i<30; i++){
 				if(user[i]==10 || user[i]=='\n'){
@@ -66,7 +66,7 @@ int main(){
 			}
 		}
 	}
-	printf("Benvenuto '%s' nel sistema FAT_OS\n", user);
+	printf("Benvenuto '%s' nel sistema FAT_OS\n\n", user);
 	printInfo();
 	printInfoMD();
 	char row[50]={0};
@@ -105,20 +105,20 @@ int main(){
 	currentPath();
 	int wait_server=0;
 	while(!e){
-		printf("%s", CMD_LINE);
+		printf("%s%s%s", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 		fgets(row, 50, stdin);
 		if(row[0]==10){
 			fgets(row, 50, stdin);
 		}
 		getCmd(cmd, row);
 		if(strcmp(CREATE_FILE_CMD, cmd)==0){//GESTIRE IL PERCORSO E INODE PADRE
-			printf("%sInserire il nome del file da creare senza spazi: ", CMD_LINE);
+			printf("%s%s%sInserire il nome del file da creare senza spazi: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 			fgets(info, 50, stdin);
 			getCmd(name, info);
 			while(name[0]==0){
 				memset(info, 0, 50);
 				memset(name, 0, 50);
-				printf("%sInserire il nome del file da creare senza spazi: ", CMD_LINE);
+				printf("%s%s%sInserire il nome del file da creare senza spazi: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 				fgets(info, 50, stdin);
 				getCmd(name, info);
 			}
@@ -126,13 +126,13 @@ int main(){
 			sendToServer(elem);
 			wait_server=1;
 		}else if(strcmp(ERASE_FILE_CMD, cmd)==0){//GESTIRE LA POSZIONE
-			printf("%sInserire il nome del file da eliminare: ", CMD_LINE);
+			printf("%s%s%sInserire il nome del file da eliminare: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 			fgets(info, 50, stdin);
 			getCmd(name, info);
 			while(name[0]==0){
 				memset(info, 0, 50);
 				memset(name, 0, 50);
-				printf("%sInserire il nome del file da eliminare: ", CMD_LINE);
+				printf("%s%s%sInserire il nome del file da eliminare: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 				fgets(info, 50, stdin);
 				getCmd(name, info);
 			}
@@ -141,7 +141,7 @@ int main(){
 			wait_server=1;
 
 		}else if(strcmp(WRITE_FILE_CMD, cmd)==0){
-			printf("%sInserire il nome del file in cui scrivere: ", CMD_LINE);
+			printf("%s%s%sInserire il nome del file in cui scrivere: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 			fgets(info, 50, stdin);
 			getCmd(name, info);
 			int inode=searchElement(name, current_path);
@@ -169,7 +169,7 @@ int main(){
 					printf("Errore: impossibile effettuare il seeking del file\ncon il valore inserito in input\n");
 					memset(el, 0, 64);
 					memset(e, 0, 64);
-					printf("%sInserire da quale posizione si vuole iniziare la scrittura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
+					printf("%s%s%sInserire da quale posizione si vuole iniziare la scrittura del file \n(digitare 0 se si vuole leggere dall'inizio): ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 					fgets(el, 64, stdin);
 					if(el[0]==10){
 						fgets(el, 64, stdin);
@@ -206,7 +206,7 @@ int main(){
 				if(fd==-1) handle_error("Errore: impossibile aprire il file in scrittura\n");
 				ret=lseek(fd, position, SEEK_SET);
 				if(ret==-1) printf("Errore: impossibile spostare la posizione del file\n");
-				printf("%sScrivere il contenuto da inserire nel file:\n", CMD_LINE);
+				printf("%s%s%sScrivere il contenuto da inserire nel file:\n", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 				char msg[1024]={0};
 				fgets(msg, 1024, stdin);
 				int wf=write(fd, msg, strlen(msg));
@@ -226,7 +226,7 @@ int main(){
 				memset(old_msg, 0, 1024);
 			}
 		}else if(strcmp(READ_FILE_CMD, cmd)==0){
-			printf("%sInserire il nome del file in cui scrivere: ", CMD_LINE);
+			printf("%s%s%sInserire il nome del file in cui scrivere: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 			scanf("%s", info);
 			int inode=searchElement(info, current_path);
 			if(inode==0){
@@ -238,7 +238,7 @@ int main(){
 				int fd=open(filename, O_RDWR);
 				if(fd==-1) handle_error("Errore: impossibile aprire il file in lettura\n");
 				printf("Apertura del file in corso...\n");
-				printf("%sInserire da quale posizione si vuole iniziare la lettura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
+				printf("%s%s%sInserire da quale posizione si vuole iniziare la lettura del file \n(digitare 0 se si vuole leggere dall'inizio): ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 				char el[64]={0};
 				int position;
 				fgets(el, 64, stdin);
@@ -253,7 +253,7 @@ int main(){
 					printf("Errore: impossibile effettuare il seeking del file\ncon il valore inserito in input\n");
 					memset(el, 0, 64);
 					memset(e, 0, 64);
-					printf("%sInserire da quale posizione si vuole iniziare la lettura del file \n(digitare 0 se si vuole leggere dall'inizio): ", CMD_LINE);
+					printf("%s%s%sInserire da quale posizione si vuole iniziare la lettura del file \n(digitare 0 se si vuole leggere dall'inizio): ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 					fgets(el, 64, stdin);
 					if(el[0]==10){
 						fgets(el, 64, stdin);
@@ -288,13 +288,13 @@ int main(){
 			printf("Prima di eseguire la lettura o la scrittura di un file è possibile spostare la \nposizione corrente del file stesso, in modo tale che tali operazioni possano \navvenire nel punto desiderato\n");
 			printf("NB: è obbligatorio inserire un valore\n");
 		}else if(strcmp(CREATE_DIRECTORY_CMD, cmd)==0){//GESTIRE IL PERCORSO E INODE PADRE
-			printf("%sInserire il nome della directory da creare senza spazi: ", CMD_LINE);
+			printf("%s%s%sInserire il nome della directory da creare senza spazi: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 			fgets(info, 50, stdin);
 			getCmd(name, info);
 			while(name[0]==0){
 				memset(info, 0, 50);
 				memset(name, 0, 50);
-				printf("%sInserire il nome della directory da creare senza spazi: ", CMD_LINE);
+				printf("%s%s%sInserire il nome della directory da creare senza spazi: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 				fgets(info, 50, stdin);
 				getCmd(name, info);
 			}
@@ -302,19 +302,19 @@ int main(){
 			sendToServer(elem);
 			wait_server=1;
 		}else if(strcmp(ERASE_DIRECTORY_CMD, cmd)==0){//GESTIRE LA POSIZIONE
-			printf("%sInserire il nome della directory da eliminare: ", CMD_LINE);
+			printf("%s%s%sInserire il nome della directory da eliminare: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 			fgets(info, 50, stdin);
 			getCmd(name, info);
 			while(name[0]==0){
 				memset(info, 0, 50);
 				memset(name, 0, 50);
-				printf("%sInserire il nome della directory da eliminare: ", CMD_LINE);
+				printf("%s%s%sInserire il nome della directory da eliminare: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 				fgets(info, 50, stdin);
 				getCmd(name, info);
 			}
 			sprintf(elem, "%s %s %s %s", DELETE_CMD, name, DIR_TYPE, current_path);
 			char risposta[50]={0};
-			printf("%sEliminando la directory '%s' eliminerai tutto il suo contenuto.\nProseguire?[S/n]:", CMD_LINE, name);
+			printf("%s%s%sEliminando la directory '%s' eliminerai tutto il suo contenuto.\nProseguire?[S/n]:", COLOR_BOLD, CMD_LINE, COLOR_OFF, name);
 			memset(info, 0, 50);
 			fgets(info, 50, stdin);
 			getCmd(risposta, info);
@@ -333,7 +333,7 @@ int main(){
 				printf("Selezionato no o carattere diverso\n");
 			}
 		}else if(strcmp(CHANGE_DIRECTORY_CMD, cmd)==0){
-			printf("%sInserire il nome della directory in cui spostarsi: ", CMD_LINE);
+			printf("%s%s%sInserire il nome della directory in cui spostarsi: ", COLOR_BOLD, CMD_LINE, COLOR_OFF);
 			scanf("%s", info);
 			if(strcmp(MOVE_FATHER, info)==0){
 				if(strcmp(FILE_SYSTEM_DIRECTORY, fat_padre->name)==0){

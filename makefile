@@ -5,3 +5,5 @@ main:
 
 server: 
 	gcc -o server server.c fun_server.c var.h fun_server.h -lpthread -lrt -fcommon
+clean:
+	rm server main
